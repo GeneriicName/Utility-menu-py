@@ -19,7 +19,7 @@ The features are as follows:
 
 ***Fix 3 languages bug:*** Fixes a bug when the same language is displayed twice.
 
-***Delete users folders:*** Cleans up space. If the user is in your domain, it'll show their display name to make it clearer which users you are deleting.
+***Delete users folders:***, Choose users to delete their folders in order to cleans up space. If the user is in your domain, it'll show their display name to make it clearer which users you are deleting, will exclude the current user of the remote computer, as well as additonal users that you can configure in the config.json file
 
 ***The script also displays a bunch of information on the computer and user:***
 1. The script shows the user status (active, locked, disabled, expired, or password expired).
