@@ -28,7 +28,7 @@
   "add prefixes of usernames to exclude them, from being deleted": "comment",
   "start_with_exclude": ["admin"],
 
-  "path to user txt folder which contains computer names": "comment",
+  "path to user txt folder which contains user.txt with computer name": "comment",
   "users txt": "\\\\path\\to\\txt file",
 
   "path to assets such as images": "comment",
