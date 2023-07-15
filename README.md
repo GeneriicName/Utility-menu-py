@@ -24,4 +24,12 @@ this could be easily achived by a simple batch logon script/GPO/task, and the lo
 such as AD groups, users, paths etc) but this script contains a few nice features such as retriving network printers from a remote computer, displaying user and computer information, multithreaded file deletion,
 and a fairly simple GUI, all of which could be taken and modfied for your own project**
 
+
+**Additonal info, this script features support for logging, albit not fully, but points of the script which are most likey prone to exceptions are covered
+Also, the assets folder contains all the images for the GUI application
+You can past a user/computername/ip address or network path of a printer in the entry box**
+
 I wont be updating this script any further, but if you need help to understand why i did somthing in my script or how it works, feel free to ask.
+
+![image](https://github.com/GeneriicName/Utility-menu-py/assets/139624416/e8cf7404-8e4d-41a6-ae73-cb231ebf6c0b)
+
