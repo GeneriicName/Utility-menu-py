@@ -348,18 +348,7 @@ def fix_ie_func() -> None:
         pass
     except:
         log()
-
-    user = config.current_user
-    if user:
-        add_member(user, "AD group to fix internet explorer")
-        refresh()
-        try:
-            copy(r"\\path\to\server\Enableie11.bat",
-                 fr"\\{pc}\c$\Users\{user}\Desktop\fix IE.bat")
-        except FileExistsError:
-            pass
-        except:
-            log()
+        
     update(ie_fixed, "Internet explorer: Fixed")
     print_success(console, output=f"Fixed internet explorer", newline=True)
 
