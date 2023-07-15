@@ -10,6 +10,7 @@ The features are as follows:
 ***Get network printers from the computer:*** This includes printers installed via print servers, TCP/IP, and WSD. It will retrieve the IP and tell you if it's found on any of the print servers.
 
 ***Delete the OST file from the remote computer.***
+
 ***Reset print spooler.***
 
 ***Fix Internet Explorer:*** Depending on your OS version, this might not work.
