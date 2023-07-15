@@ -1,0 +1,37 @@
+{
+
+  "this is the path to the logfile if false, it wont log errors": "comment",
+  "log": "\\\\path\\to\\logfile.log",
+
+  "set your domain with ldap": "comment",
+  "domain": "DC=exanole,DC=domain,DC=com",
+
+  "path to your print servers, list them with network path and double backslashes": "comment",
+  "print_servers": ["\\\\printers01", "\\\\printers02", "\\\\printers03", "\\\\printers04",  "\\\\printers05"],
+
+  "paths to extra None user specific folders to delete their contents, and optional prompt, leave out the \\\\computername\\c$\\": "comment",
+  "to_delete": [["windows\\ccmcache", "Deleting ccsm cashe", "Deleted ccsm cashe"], ["temp"], ["Windows\\Temp", "Deleting windows temp files", "Deleted windows temp files"]],
+
+  "paths to user specific folders to delete, and optional prompt, leave out the \\\\computername\\c$\\user": "comment",
+  "in the prompt you can use users_amount to insert the amount of users": "comment",
+  "user_specific_delete": [],
+
+  "delete temp files of each user? set true to if so": "comment",
+  "delete_user_temp": true,
+
+  "delete search.edb? set true if so": "comment",
+  "delete_edb": true,
+
+  "set the usernames to exclude them from being deleted by the script": "comment",
+  "do_not_delete":["public","default", "default user", "all users", "desktop.ini"],
+
+  "add prefixes of usernames to exclude them, from being deleted": "comment",
+  "start_with_exclude": ["admin"],
+
+  "path to user txt folder which contains computer names": "comment",
+  "users txt": "\\\\oath\\to\\txt file",
+
+  "path to assets such as images": "comment",
+  "assets": "\\\\path\\to\\images"
+
+}
