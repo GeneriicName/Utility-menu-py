@@ -4,7 +4,7 @@
   "log": "\\\\path\\to\\logfile.log",
 
   "set your domain with ldap": "comment",
-  "domain": "DC=exanole,DC=domain,DC=com",
+  "domain": "DC=example,DC=domain,DC=com",
 
   "path to your print servers, list them with network path and double backslashes": "comment",
   "print_servers": ["\\\\printers01", "\\\\printers02", "\\\\printers03", "\\\\printers04",  "\\\\printers05"],
