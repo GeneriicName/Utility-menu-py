@@ -23,7 +23,8 @@ The features are as follows:
 
 ***The script also displays a bunch of information on the computer and user:***
 1. The script shows the user status (active, locked, disabled, expired, or password expired).
-2. Similarly, it shows the computer status, including space in the C or D disk, uptime, current user, and whether the computer is online/offline.
+2. Similarly, it shows the computer status, including space in the C or D disk, uptime, current user, and whether the computer is online/offline. 
+3. A bunch more quality of life features. 
    
 **To use this script with usernames as well as hostnames, you will need a user.txt file containing the computer name from which the last user has logged on. You can easily achieve this with a simple batch logon script/GPO/task, and the location to which the files are dumped needs to be configured in the config.json file.**
 
