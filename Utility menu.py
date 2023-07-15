@@ -348,7 +348,7 @@ def fix_ie_func() -> None:
         pass
     except:
         log()
-        
+
     update(ie_fixed, "Internet explorer: Fixed")
     print_success(console, output=f"Fixed internet explorer", newline=True)
 
@@ -1045,7 +1045,7 @@ class SetConfig:
 
 
 
-with open("\\".join(__file__.split("\\")[:-1])+"\\GUI_config.json", encoding="utf8") as config_file:
+with open("\\".join(__file__.split("\\")[:-1])+"\\config.json", encoding="utf8") as config_file:
     config = SetConfig(load(config_file))
 
 if config.log and not path.isfile(config.log):
@@ -1053,7 +1053,6 @@ if config.log and not path.isfile(config.log):
         with open(config.log, "w") as _:
             pass
     except:
-        print(f"Unable o create the logfile at {config.log} due to the following error", format_exc())
         config.log = False
 
 if config.log:
