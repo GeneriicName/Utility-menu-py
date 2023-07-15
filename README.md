@@ -1,35 +1,35 @@
-# Utility-menu-py
-A utility menu i made while working as an help desk, was made in between calls, so i'm aware its far from perfect.
+# Utility-menu.py
+A utility menu I made while working as a help desk. It was made in between calls, so I'm aware it's far from perfect.
 
-***you will need to configure the config file before starting it up***, i added some comments as for how to configure it and with some examples.
+***You will need to configure the config file before starting it up.*** I added some comments on how to configure it and provided some examples.
 
-the features are as for the following:
-***Clean space from remote computers***, you can configure which directories to clean up via the config file, as well as if to delete the search edb file of windows
-***Get network printers from the computer***, including printers installed via print servers, TCP/IP and WSD (will retrive the IP, and tell you if its found on any of the print servers)
-***Delete the OST file from the remote computer*** 
-***Reset print spooler*** 
-***Fix internet explorer***, depending on your OS version this might not work
-***Fix cockpit printers***, via deleting the appropriate registry keys - usefull only if your org uses jetro cockpit
-***Fix 3 languages bug***, fixes a bug when the same language get displayed twice
-***Delete users folders***, to clean up space - if the user is in your domain it'll show its display name - so it's clearer which users are you deleting
+The features are as follows:
 
-***Display a bunch of information on the computer and user***
-1. The script will show the user status (active, locked, disabled, expired, or password expired)
-2. Same goes for the computer, it will show space in C or D disk, uptime, current user, if the computer is online/offline
+***Clean space from remote computers:*** You can configure which directories to clean up via the config file, as well as whether to delete the Windows search edb file.
 
-**You will need to have a user.txt file containing the computername from which the last user has logged on to if you want to be able to use this script with username as well as hostnames,
-this could be easily achived by a simple batch logon script/GPO/task, and the location to which the files are dumped need to be configured in the config.json file**
+***Get network printers from the computer:*** This includes printers installed via print servers, TCP/IP, and WSD. It will retrieve the IP and tell you if it's found on any of the print servers.
 
-**I'm fully aware this is'nt a completed program, i uploaded it with some features missing (only relevent for the company i'm working for, and i wouldn't want to release sensetive information
-such as AD groups, users, paths etc) but this script contains a few nice features such as retriving network printers from a remote computer, displaying user and computer information, multithreaded file deletion,
-and a fairly simple GUI, all of which could be taken and modfied for your own project**
+***Delete the OST file from the remote computer.***
+***Reset print spooler.***
 
+***Fix Internet Explorer:*** Depending on your OS version, this might not work.
 
-**Additonal info, this script features support for logging, albit not fully, but points of the script which are most likey prone to exceptions are covered
-Also, the assets folder contains all the images for the GUI application
-You can past a user/computername/ip address or network path of a printer in the entry box**
+***Fix cockpit printers:*** This deletes the appropriate registry keys. Useful only if your organization uses Jetro Cockpit.
 
-I wont be updating this script any further, but if you need help to understand why i did somthing in my script or how it works, feel free to ask.
+***Fix 3 languages bug:*** Fixes a bug when the same language is displayed twice.
 
+***Delete users folders:*** Cleans up space. If the user is in your domain, it'll show their display name to make it clearer which users you are deleting.
+
+***The script also displays a bunch of information on the computer and user:***
+1. The script shows the user status (active, locked, disabled, expired, or password expired).
+2. Similarly, it shows the computer status, including space in the C or D disk, uptime, current user, and whether the computer is online/offline.
+   
+**To use this script with usernames as well as hostnames, you will need a user.txt file containing the computer name from which the last user has logged on. You can easily achieve this with a simple batch logon script/GPO/task, and the location to which the files are dumped needs to be configured in the config.json file.**
+
+**I'm fully aware that this isn't a completed program. I uploaded it with some features missing (only relevant for the company I'm working for), and I wouldn't want to release sensitive information such as AD groups, users, paths, etc. However, this script contains a few nice features such as retrieving network printers from a remote computer, displaying user and computer information, multithreaded file deletion, and a fairly simple GUI. You can take and modify these features for your own project.**
+
+***Additional info: This script features support for logging, although not fully. However, points of the script that are most likely prone to exceptions are covered. Also, the "assets" folder contains all the images for the GUI application. You can paste a username/computer name/IP address or network path of a printer in the entry box. I didn't split the script into multiple files as I compile it to an executable using Nuitka for ease of distribution to other team members.***
+
+I won't be updating this script any further, but if you need help understanding why I did something in my script or how it works, feel free to ask.
 ![image](https://github.com/GeneriicName/Utility-menu-py/assets/139624416/e8cf7404-8e4d-41a6-ae73-cb231ebf6c0b)
 
