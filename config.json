@@ -29,7 +29,7 @@
   "start_with_exclude": ["admin"],
 
   "path to user txt folder which contains computer names": "comment",
-  "users txt": "\\\\oath\\to\\txt file",
+  "users txt": "\\\\path\\to\\txt file",
 
   "path to assets such as images": "comment",
   "assets": "\\\\path\\to\\images"
