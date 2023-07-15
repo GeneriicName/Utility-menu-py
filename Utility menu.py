@@ -842,125 +842,122 @@ def on_submit(pc: bool = None, passed_user: str = None) -> None:
         computer.bind("<Return>", lambda _: on_submit())
         return
     disable(disable_submit=True)
-    for is_pc in (pc, f"m{pc}-w10", f"m{pc}", f"{pc}-w10"):
+    refresh()
+    if pc_in_domain(pc):
+        copy_but.configure(state="normal")
+        copy_clip(pc)
+        config.current_computer = pc
+        update(display_pc, f"Current computer: {pc}")
         refresh()
-        if pc_in_domain(is_pc):
-            copy_but.configure(state="normal")
-            copy_clip(is_pc)
-            config.current_computer = is_pc
-            pc = is_pc
-            update(display_pc, f"Current computer: {pc}")
-            refresh()
-            if check_pc_active(pc):
-                if not wmi_connectable():
-                    print_error(console, output="Could not connect to computer's WMI", newline=True)
-                    submit.configure(state="normal")
-                    computer.bind("<Return>", lambda _: on_submit())
-                    return
-                if not reg_connect():
-                    print_error(console, output="Could not connect to computer's registry", newline=True)
-                    submit.configure(state="normal")
-                    computer.bind("<Return>", lambda _: on_submit())
-                    return
-                print_success(computer_status, "ONLINE", "Computer status: ", clear_=True)
-                refresh()
-                user_ = get_username(pc)
-                if user_:
-                    config.current_user = user_
-                    if not passed_user or passed_user.lower() == user_.lower():
-                        update(display_user, f"Current user: {user_name_trasnslation(user_)}")
-                    else:
-                        update_error(display_user, "Current user: ", user_)
-                else:
-                    update_error(display_user, "Current user: ", "No user")
-                refresh()
-                try:
-                    r_pc = WMI(pc)
-                    for k in r_pc.Win32_OperatingSystem():
-                        last_boot_time = datetime.strptime(k.LastBootUpTime.split('.')[0], '%Y%m%d%H%M%S')
-                        current_time = datetime.strptime(k.LocalDateTime.split('.')[0], '%Y%m%d%H%M%S')
-                        uptime_ = current_time - last_boot_time
-                        if uptime_ > timedelta(days=7):
-                            update_error(uptime, "Uptime: ", uptime_)
-                        else:
-                            update(uptime, f"Uptime: {uptime_}")
-                        break
-                except:
-                    update_error(uptime, "Uptime: ", "ERROR")
-                    log()
-                refresh()
-
-                try:
-                    space = get_space(pc)
-                    if space <= 5:
-                        update_error(space_c, "Space in C disk: ", f"{space:.1f}GB free out of "
-                                                                   f"{get_total_space(pc):.1f}GB")
-                    else:
-                        update(space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
-                except:
-                    log()
-                    update_error(space_c, "Space in C disk: ", "ERROR")
-                refresh()
-
-                if path.exists(fr"\\{pc}\d$"):
-                    try:
-                        space = get_space(pc, disk="d")
-                        if space <= 5:
-                            update_error(space_d, "Space in D disk: ", f"{space:.1f}GB free out of "
-                                                                       f"{get_total_space(pc, disk='d'):.1f}GB")
-                        else:
-                            update(space_d, f"Space in D disk: {space:.1f}GB free out of "
-                                            f"{get_total_space(pc, disk='d'):.1f}GB")
-                    except:
-                        log()
-                        update_error(space_d, "Space in D disk: ", "ERROR")
-                else:
-                    update_error(space_d, "Space in D disk: ", "Does not exist")
-                refresh()
-
-                try:
-                    try:
-                        r_pc
-                    except NameError:
-                        r_pc = WMI(pc)
-                    for ram_ in r_pc.Win32_ComputerSystem():
-                        total_ram = int(ram_.TotalPhysicalMemory) / (1024 ** 3)
-                        if total_ram < 7:
-                            update_error(ram, "Total RAM: ", f"{round(total_ram)}GB")
-                        else:
-                            update(ram, f"Total RAM: {round(total_ram)}GB")
-                except:
-                    update_error(ram, "Total RAM: ", "ERROR")
-                    log()
-                refresh()
-
-                if is_ie_fixed(pc):
-                    update(ie_fixed, "Internet explorer: Fixed")
-                else:
-                    update_error(ie_fixed, "Internet explorer: ", "Not fixed")
-                refresh()
-
-                if is_cpt_fixed(pc):
-                    update(cpt_fixed, "Cockpit printer: Fixed")
-                else:
-                    update_error(cpt_fixed, "Cockpit printer", "Not fixed")
-                refresh()
-
-                if user_ or passed_user:
-                    if passed_user:
-                        user_ = passed_user
-                    update_user(user_)
-                else:
-                    update_error(user_active, "User status: ", "No user")
-                refresh()
-                enable()
-            else:
-                print_error(computer_status, "OFFLINE", "Computer status: ", clear_=True)
+        if check_pc_active(pc):
+            if not wmi_connectable():
+                print_error(console, output="Could not connect to computer's WMI", newline=True)
                 submit.configure(state="normal")
                 computer.bind("<Return>", lambda _: on_submit())
+                return
+            if not reg_connect():
+                print_error(console, output="Could not connect to computer's registry", newline=True)
+                submit.configure(state="normal")
+                computer.bind("<Return>", lambda _: on_submit())
+                return
+            print_success(computer_status, "ONLINE", "Computer status: ", clear_=True)
+            refresh()
+            user_ = get_username(pc)
+            if user_:
+                config.current_user = user_
+                if not passed_user or passed_user.lower() == user_.lower():
+                    update(display_user, f"Current user: {user_name_trasnslation(user_)}")
+                else:
+                    update_error(display_user, "Current user: ", user_)
+            else:
+                update_error(display_user, "Current user: ", "No user")
+            refresh()
+            try:
+                r_pc = WMI(pc)
+                for k in r_pc.Win32_OperatingSystem():
+                    last_boot_time = datetime.strptime(k.LastBootUpTime.split('.')[0], '%Y%m%d%H%M%S')
+                    current_time = datetime.strptime(k.LocalDateTime.split('.')[0], '%Y%m%d%H%M%S')
+                    uptime_ = current_time - last_boot_time
+                    if uptime_ > timedelta(days=7):
+                        update_error(uptime, "Uptime: ", uptime_)
+                    else:
+                        update(uptime, f"Uptime: {uptime_}")
+                    break
+            except:
+                update_error(uptime, "Uptime: ", "ERROR")
+                log()
+            refresh()
+
+            try:
+                space = get_space(pc)
+                if space <= 5:
+                    update_error(space_c, "Space in C disk: ", f"{space:.1f}GB free out of "
+                                                               f"{get_total_space(pc):.1f}GB")
+                else:
+                    update(space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+            except:
+                log()
+                update_error(space_c, "Space in C disk: ", "ERROR")
+            refresh()
+
+            if path.exists(fr"\\{pc}\d$"):
+                try:
+                    space = get_space(pc, disk="d")
+                    if space <= 5:
+                        update_error(space_d, "Space in D disk: ", f"{space:.1f}GB free out of "
+                                                                   f"{get_total_space(pc, disk='d'):.1f}GB")
+                    else:
+                        update(space_d, f"Space in D disk: {space:.1f}GB free out of "
+                                        f"{get_total_space(pc, disk='d'):.1f}GB")
+                except:
+                    log()
+                    update_error(space_d, "Space in D disk: ", "ERROR")
+            else:
+                update_error(space_d, "Space in D disk: ", "Does not exist")
+            refresh()
+
+            try:
+                try:
+                    r_pc
+                except NameError:
+                    r_pc = WMI(pc)
+                for ram_ in r_pc.Win32_ComputerSystem():
+                    total_ram = int(ram_.TotalPhysicalMemory) / (1024 ** 3)
+                    if total_ram < 7:
+                        update_error(ram, "Total RAM: ", f"{round(total_ram)}GB")
+                    else:
+                        update(ram, f"Total RAM: {round(total_ram)}GB")
+            except:
+                update_error(ram, "Total RAM: ", "ERROR")
+                log()
+            refresh()
+
+            if is_ie_fixed(pc):
+                update(ie_fixed, "Internet explorer: Fixed")
+            else:
+                update_error(ie_fixed, "Internet explorer: ", "Not fixed")
+            refresh()
+
+            if is_cpt_fixed(pc):
+                update(cpt_fixed, "Cockpit printer: Fixed")
+            else:
+                update_error(cpt_fixed, "Cockpit printer", "Not fixed")
+            refresh()
+
+            if user_ or passed_user:
                 if passed_user:
-                    update_user(passed_user)
-            break
+                    user_ = passed_user
+                update_user(user_)
+            else:
+                update_error(user_active, "User status: ", "No user")
+            refresh()
+            enable()
+        else:
+            print_error(computer_status, "OFFLINE", "Computer status: ", clear_=True)
+            submit.configure(state="normal")
+            computer.bind("<Return>", lambda _: on_submit())
+            if passed_user:
+                update_user(passed_user)
     else:
         refresh()
         try:
@@ -1044,7 +1041,7 @@ class SetConfig:
 
 
 try:
-    with open("\\".join(__file__.split("\\")[:-1])+"\\config.json", encoding="utf8") as config_file:
+    with open("\\".join(__file__.split("\\")[:-1]) + "\\config.json", encoding="utf8") as config_file:
         config = SetConfig(load(config_file))
 except FileNotFoundError:
     messagebox.showerror("config file error", "could not find the config file")
@@ -1870,7 +1867,6 @@ console.place(
     width=680.0,
     height=269.0
 )
-
 
 mouse_listener = mouse.Listener(on_click=on_button_press)
 mouse_listener.start()
