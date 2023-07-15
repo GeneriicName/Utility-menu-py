@@ -1,12 +1,11 @@
 import sys
 import pythoncom
-from traceback import format_exc
 from os import path, unlink, listdir, mkdir, rename, chmod, environ
 from stat import S_IWRITE
 from wmi import WMI
 from winreg import HKEY_CURRENT_USER, HKEY_USERS, KEY_ALL_ACCESS, DeleteKey, DeleteValue, QueryValueEx, REG_DWORD
 from winreg import OpenKey, QueryInfoKey, EnumKey, ConnectRegistry, HKEY_LOCAL_MACHINE, KEY_SET_VALUE, SetValueEx
-from shutil import rmtree, copy
+from shutil import rmtree
 from subprocess import run
 from time import sleep, time
 from getpass import getuser
@@ -1041,12 +1040,15 @@ class SetConfig:
         self.users_equal = False
         self.wmi_connectable = False
         self.reg_connectable = False
-        self.assets = self.config_file["assets"]
+        self.assets = self.config_file["assets"].replace("/", "\\")
 
 
-
-with open("\\".join(__file__.split("\\")[:-1])+"\\config.json", encoding="utf8") as config_file:
-    config = SetConfig(load(config_file))
+try:
+    with open("\\".join(__file__.split("\\")[:-1])+"\\config.json", encoding="utf8") as config_file:
+        config = SetConfig(load(config_file))
+except FileNotFoundError:
+    messagebox.showerror("config file error", "could not find the config file")
+    sys.exit(0)
 
 if config.log and not path.isfile(config.log):
     try:
