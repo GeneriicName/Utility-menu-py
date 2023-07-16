@@ -45,8 +45,8 @@ This is an example of the config file which is included with the directory, the 
   "add prefixes of usernames to exclude them, from being deleted": "comment",
   "start_with_exclude": ["admin"],
 
-  "path to user txt folder which contains computer names": "comment",
-  "users txt": "\\\\path\\to\\txt file",
+  "path of folder which contains computer names in usename.txt files": "comment",
+  "users_txt": "\\\\path\\to\\txt file",
 
   "path to assets such as images": "comment",
   "assets": "C:\\Users\\betza\\Desktop\\scripts\\build\\assets"
