@@ -1074,7 +1074,7 @@ class SetConfig:
                                  len(path_with_msg) > 1]
         self.u_paths_without_msg = [path_without_msg for path_without_msg in self.config_file["user_specific_delete"] if
                                     len(path_without_msg) == 1]
-        self.users_txt = self.config_file["users txt"]
+        self.users_txt = self.config_file["users_txt"]
         self.current_computer = None
         self.current_user = None
         self.exclude = self.config_file["do_not_delete"]
