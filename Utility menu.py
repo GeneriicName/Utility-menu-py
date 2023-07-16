@@ -20,12 +20,13 @@ from functools import wraps
 from pynput import mouse
 from concurrent.futures import ThreadPoolExecutor
 from psutil import disk_usage
-from pyad import adgroup, adquery, aduser
+from pyad import adquery
 import tkinter.messagebox
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, INSERT, messagebox, END, ttk, CENTER, SEL
 
 
 def redirect(output: str) -> None:
+    """redirects all output to the console Text object"""
     console.configure(state="normal")
     console.insert(END, output)
     console.see(END)
@@ -34,6 +35,7 @@ def redirect(output: str) -> None:
 
 def print_error(obj: Text, output: str = "", additional: str = "", clear_: bool = False, see: bool = False,
                 newline: bool = False) -> None:
+    """prints an error to an object, will be red colored"""
     if clear_:
         clear_obj(obj)
     obj.configure(state="normal")
@@ -50,6 +52,7 @@ def print_error(obj: Text, output: str = "", additional: str = "", clear_: bool 
 
 def print_success(obj: Text, output: str = "", additional: str = "", clear_: bool = False, see: bool = False,
                   newline: bool = False) -> None:
+    """print green text to an object"""
     if clear_:
         clear_obj(obj)
     obj.configure(state="normal")
@@ -65,13 +68,15 @@ def print_success(obj: Text, output: str = "", additional: str = "", clear_: boo
 
 
 def update(obj: Text, statement: str) -> None:
+    """updates an object with new text"""
     obj.configure(state="normal")
     obj.delete("1.0", END)
     obj.insert(INSERT, statement)
     obj.configure(state="disabled")
 
 
-def update_error(obj: Text, initial: str, statement: str) -> None:
+def update_error(obj: tkinter.Text, initial: str, statement: str | timedelta) -> None:
+    """"updates red text into an object"""
     obj.configure(state="normal")
     obj.tag_configure('red', foreground='red')
     obj.delete("1.0", END)
@@ -81,24 +86,23 @@ def update_error(obj: Text, initial: str, statement: str) -> None:
 
 
 def clear_obj(obj: Text) -> None:
+    """"clears an object from text"""
     obj.configure(state="normal")
     obj.delete("1.0", END)
     obj.configure(state="disabled")
 
 
 def tsleep(secs: float) -> None:
-    t = Thread(target=lambda: t_actual_sleep(secs), daemon=True)
+    """"sleeps using thread, and updates the main gui window while the thread has not finished"""
+    t = Thread(target=lambda: sleep(secs), daemon=True)
     t.start()
     while t.is_alive():
         refresh()
         sleep(0.05)
 
 
-def t_actual_sleep(secs: float) -> None:
-    sleep(secs)
-
-
 def clear_all() -> None:
+    """"clears all objects in the gui window, and sets their default text"""
     for obj in [[display_pc, "Current computer: "], [computer_status, "Computer status: "], [console, ""],
                 [display_user, "Current user: "], [uptime, "Uptime: "], [space_c, "Space in C disk: "],
                 [space_d, "Space in D disk: "], [ram, "Total RAM: "], [ie_fixed, "Internet explorer: "],
@@ -112,6 +116,8 @@ def clear_all() -> None:
 
 
 def disable(disable_submit: bool = False) -> None:
+    """"disables all the buttons, so they aren't clickable while a function is still executing, also disables submitting
+    by pressing the enter key"""
     computer.unbind("<Return>")
     for obj in (reset_spool, fix_cpt, fix_ie, clear_space, get_printers, delete_ost, delete_users, fix_3_lang,
                 copy_but):
@@ -125,6 +131,7 @@ def disable(disable_submit: bool = False) -> None:
 
 
 def enable() -> None:
+    """"enables the buttons back, also makes submitted by pressing enter enabled again"""
     for obj in (reset_spool, fix_cpt, fix_ie, clear_space, get_printers, delete_ost, delete_users, fix_3_lang, submit,
                 copy_but):
         obj.configure(state="normal", cursor="hand2")
@@ -135,18 +142,21 @@ def enable() -> None:
 
 
 def show_text(_) -> None:
+    """"puts the default text in the computer entry box if its empty and isn't focused"""
     if computer.get() == "Computer or User":
         computer.delete(0, END)
         computer.config(justify="center")
 
 
 def hide_text(_) -> None:
+    """hides the default text once the user starts interacting with the computer entry box"""
     if computer.get() == "":
         computer.insert(0, "Computer or User")
         computer.config(justify="center")
 
 
 def enable_paste(event) -> None:
+    """"enables pasting to the computer entry while the keyboad language isn't in english"""
     ctrl = (event.state & 0x4) != 0
 
     if event.keycode == 86 and ctrl and event.keysym.lower() != "v":
@@ -160,6 +170,7 @@ def enable_paste(event) -> None:
 
 
 def copy_clip(to_copy: str) -> None:
+    """"copies the computer name to the user's clipboard"""
     cp = Tk()
     cp.withdraw()
     cp.clipboard_clear()
@@ -169,6 +180,7 @@ def copy_clip(to_copy: str) -> None:
 
 
 def on_button_press(_, __, button, ___):
+    """bring the app to the front when the middle mouse button is pressed"""
     if button == mouse.Button.middle:
         if window.wm_state() == 'iconic':
             window.deiconify()
@@ -179,24 +191,29 @@ def on_button_press(_, __, button, ___):
 
 
 def disable_middle_click(event):
+    """"disables middle mouse presses"""
     if event.num == 2:
         return "break"
 
 
 def ignore_selection(obj, _):
+    """prevents the user from being able to select and mark text on the Text boxes which display info"""
     obj.tag_remove(SEL, "1.0", END)
     return "break"
 
 
 def asset(filename: str) -> str:
+    """return the full path to images - assets that the script uses"""
     return fr"{config.assets}\{filename}"
 
 
 def create_selection_window(options):
+    """creates a selection window with checkboxes to choose which users to delete"""
     config.yes_no = False
     config.wll_delete = []
 
     def on_done():
+        """cleans up after the main function and give last warning before deleting the users folders"""
         newline = "\n"
         selected_options = [check.get() for check in option_vars if check.get()]
         canvas_.unbind_all("<MouseWheel>")
@@ -217,7 +234,9 @@ def create_selection_window(options):
         return
 
     def disable_main_window(selection_window_):
+        """disables the main window and brings the selection box to the front"""
         def on_window_close():
+            """"deletes the checkbox window and unbind middle mouse wheel from scrolling in the checkbox window"""
             window.grab_release()
             selection_window_.destroy()
             canvas_.unbind_all("<MouseWheel>")
@@ -228,6 +247,7 @@ def create_selection_window(options):
         window.wait_window(selection_window)
 
     def on_mousewheel(event):
+        """"enables scrolling in the checkbox window via middle mouse wheel, in case there are over 10 users"""
         canvas_.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     selection_window = tkinter.Toplevel(window)
@@ -267,7 +287,9 @@ def create_selection_window(options):
 
 
 class ProgressBar:
+    """"an easily deployable progressbar which can be called via a with statement"""
     def __init__(self, total_items, title_, end_statement):
+        """"initial configuration of the progressbar"""
         self.total_items = total_items
         self.title = title_
         self.current_item = 0
@@ -295,11 +317,13 @@ class ProgressBar:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """cleans up after the progress bar finishes"""
         print(self.end_statement)
         self.progressbar.destroy()
         self.label.destroy()
 
     def __call__(self):
+        """updates the progressbar when its being called"""
         self.current_item += 1
         self.root.update()
         if self.current_item <= self.total_items:
@@ -310,11 +334,14 @@ class ProgressBar:
 
 
 def refresh() -> None:
+    """refreshes the main window"""
     window.update_idletasks()
     window.update()
 
 
 def fix_ie_func() -> None:
+    """fixes the Internet Explorer application via deleting appropriate registry keys, as well as disabling
+    compatibility mode"""
     pc = config.current_computer
     if not reg_connect():
         print_error(console, output="Could not fix internet explorer", newline=True)
@@ -340,7 +367,6 @@ def fix_ie_func() -> None:
     try:
         with ConnectRegistry(pc, HKEY_CURRENT_USER) as reg:
             with OpenKey(reg, key, 0, KEY_SET_VALUE) as key:
-                # Set the value for IntranetCompatibilityMode
                 SetValueEx(key, "IntranetCompatibilityMode", 0, REG_DWORD, 0)
                 SetValueEx(key, "MSCompatibilityMode", 0, REG_DWORD, 0)
     except FileNotFoundError:
@@ -353,6 +379,7 @@ def fix_ie_func() -> None:
 
 
 def fix_cpt_func() -> None:
+    """"fixes cockpit printer via deleting the appropriate registry keys"""
     if not reg_connect():
         print_error(console, output="ERROR, could not connect to remote registry", newline=True)
         return
@@ -372,6 +399,7 @@ def fix_cpt_func() -> None:
 
 
 def fix_3_languages() -> None:
+    """fixes 3 languages bug via deleting the appropriate registry keys"""
     if not reg_connect():
         print_error(console, output="ERROR, could not connect to remote registry", newline=True)
         return
@@ -391,6 +419,7 @@ def fix_3_languages() -> None:
 
 
 def reset_spooler() -> None:
+    """resets the print spooler via WMI"""
     try:
         # noinspection PyUnboundLocalVariable
         refresh()
@@ -408,11 +437,13 @@ def reset_spooler() -> None:
 
 
 def delete_the_ost() -> None:
+    """renames the ost file to .old with random digits in order to avoid conflict with duplicate ost filenames
+    handles shutting down outlook and skype on the remote computer so the OST could be renamed"""
     user_ = config.current_user
     pc = config.current_computer
     if not tkinter.messagebox.askyesno(title="OST deletion",
                                        message=f"Are you sure you want to delete "
-                                               f"the ost of {user_name_trasnslation(user_)}?"):
+                                               f"the ost of {user_name_translation(user_)}?"):
         print_error(console, output="Canceled OST deletion", newline=True)
         return
     try:
@@ -457,6 +488,7 @@ def delete_the_ost() -> None:
 
 
 def my_rm(file_: str, bar_: callable) -> None:
+    """removes readonly files via changing the file permissions"""
     try:
         if path.isfile(file_) or path.islink(file_):
             unlink(file_)
@@ -470,6 +502,7 @@ def my_rm(file_: str, bar_: callable) -> None:
 
 
 def rmtree_recreate(dir_: str, bar_: callable = None) -> None:
+    """removes the entire dir with its contents and then recreate it"""
     try:
         rmtree(dir_, ignore_errors=True)
         mkdir(dir_)
@@ -482,17 +515,17 @@ def rmtree_recreate(dir_: str, bar_: callable = None) -> None:
 
 
 def clear_space_func() -> None:
+    """clears spaces from the remote computer, paths, and other configurations as for which files to delete
+    can be configured via the config file. uses multithreading to delete the files faster"""
     refresh()
     pc = config.current_computer
     users_dirs = listdir(fr"\\{pc}\c$\users")
     refresh()
 
-    # get initial space
     space_init = get_space(pc)
     flag = False
     refresh()
 
-    # clears search edb
     edb_file = fr"\\{pc}\c$\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb"
     if path.exists(edb_file) and config.delete_edb:
         try:
@@ -510,7 +543,6 @@ def clear_space_func() -> None:
         except:
             log()
 
-    # Deletes None user-specific files
     if config.c_paths_with_msg:
         for path_msg in config.c_paths_with_msg:
             if len(path_msg[0]) < 3:
@@ -527,7 +559,6 @@ def clear_space_func() -> None:
                             sleep(0.1)
                             window.update()
 
-    # deletes temps of each user
     if config.delete_user_temp:
         with ProgressBar(len(users_dirs), f"Deleting temps of {len(users_dirs)} users",
                          f"Deleted temps of {len(users_dirs)} users") as bar:
@@ -626,13 +657,17 @@ def clear_space_func() -> None:
         update_error(space_c, "Space in C disk: ", "ERROR")
 
 
-def my_rmtree(dir_, bar_) -> None:
+def my_rmtree(dir_: str, bar_: callable) -> None:
+    """delete folders and their contents, then calls the bar object"""
     if path.isdir(dir_):
         rmtree(dir_, onerror=on_rm_error)
     bar_()
 
 
 def del_users() -> None:
+    """gives you the option to choose which users folders to delete as well as multithreading deletion of folders
+    will exclude the current user of the remote pc if found one.
+    users to exclude could be configured in the config file"""
     config.wll_delete = []
     config.yes_no = False
     pc = config.current_computer
@@ -642,7 +677,7 @@ def del_users() -> None:
                 any([dir_.lower().startswith(exc_lude) for exc_lude in config.startwith_exclude]) \
                 or not path.isdir(fr"\\{pc}\c$\users\{dir_}"):
             continue
-        users_to_choose_delete.append([user_name_trasnslation(dir_), dir_])
+        users_to_choose_delete.append([user_name_translation(dir_), dir_])
     if not users_to_choose_delete:
         print("No users were found to delete")
         return
@@ -673,6 +708,8 @@ def del_users() -> None:
 
 
 def get_printers_func() -> None:
+    """retrieves all network printers installed on the remote computer
+     achieves that via querying the appropriate registry keys"""
     found_any = False
     pc = config.current_computer
     if not reg_connect():
@@ -701,9 +738,8 @@ def get_printers_func() -> None:
                         username = QueryValueEx(profiles, "ProfileImagePath")
                         if username[0].startswith("C:\\"):
                             username = username[0].split("\\")[-1]
-                            users_dict[sid] = user_name_trasnslation(username)
+                            users_dict[sid] = user_name_translation(username)
 
-                except FileNotFoundError:
                     pass
                 except:
                     log()
@@ -732,8 +768,6 @@ def get_printers_func() -> None:
                 log()
     flag = False
     with ConnectRegistry(pc, HKEY_LOCAL_MACHINE) as reg:
-
-        # TCP/IP printers with translation
         with OpenKey(reg, r'SYSTEM\CurrentControlSet\Control\Print\Printers') as printers:
             found = []
             printers_len = QueryInfoKey(printers)[0]
@@ -792,11 +826,15 @@ def get_printers_func() -> None:
 
 
 def run_func(func: callable) -> None:
+    """passes the function to run_it after the main window is idle, and gives the button time to be unpressed
+    as well as disabling the buttons"""
     disable(disable_submit=True)
     window.after("idle", lambda: run_it(func))
 
 
 def run_it(func: callable) -> None:
+    """runs the function it self, catch any exception and logs it, checks if the issue is a network issue via running
+    on_submit when an exception is caught"""
     refresh()
     if not reg_connect():
         on_submit()
@@ -815,6 +853,7 @@ def run_it(func: callable) -> None:
 
 
 def update_user(user_: str) -> None:
+    """updates the user status to the user_active Text box"""
     try:
         user_s = query_user(user_)
         if user_s == 0:
@@ -832,7 +871,14 @@ def update_user(user_: str) -> None:
 
 
 # noinspection PyUnboundLocalVariable
-def on_submit(pc: bool = None, passed_user: str = None) -> None:
+def on_submit(pc: str = None, passed_user: str = None) -> None:
+    """checks if the passed string is a computer in the domain
+    if it is, it checks if its online, if it is online it then proceed to display information on the computer
+    if the passed string is not a computer in the domain it looks for a file with the same name and txt extension
+    in the preconfigured path via the config file, if it finds any it treats the contents of the file as the computer
+    name and rerun on_submit with the computer as the arg
+    if the string is neither a username nor a computer name it checks if it's a printer - TCP/IP or installed via
+    print server"""
     refresh()
     clear_all()
     if not pc:
@@ -866,7 +912,7 @@ def on_submit(pc: bool = None, passed_user: str = None) -> None:
             if user_:
                 config.current_user = user_
                 if not passed_user or passed_user.lower() == user_.lower():
-                    update(display_user, f"Current user: {user_name_trasnslation(user_)}")
+                    update(display_user, f"Current user: {user_name_translation(user_)}")
                 else:
                     update_error(display_user, "Current user: ", user_)
             else:
@@ -999,6 +1045,7 @@ sys.stdout.write = redirect
 
 
 class SetConfig:
+    """"sets the basic config for the script to run on, these configs are needed in order for the script to run"""
     def __init__(self, json_config_file: dict) -> None:
         self.config_file = json_config_file
         self.ip_printers = {}
@@ -1060,6 +1107,7 @@ if config.log:
 
 
 def log() -> None:
+    """logs the exceptions as well as date, host, and username to the logfile"""
     if not config.log:
         return
     err_log = f"""{'_' * 145}\nat {datetime.now().strftime('%Y-%m-%d %H:%M')} an error occurred on {config.host}\
@@ -1072,18 +1120,12 @@ if not config.log:
     logger = getLogger("fatal exceptions")
 
 
-def log_unexpected(exc_ption, exc_value, __) -> None:
-    if exc_ption != KeyboardInterrupt:
-        exception(f"""{'_' * 145}\nat {datetime.now().strftime('%Y-%m-%d %H:%M')} a FATAL error occurred on 
-{config.host} - {config.user}\n""", exc_info=exc_value)
-    sys.exit(1)
-
-
 class TimeoutException(Exception):
     pass
 
 
-def Timeout(timeout: int) -> bool:
+def Timeout(timeout: int | float) -> bool | TimeoutException | callable:
+    """"run a function with timeout limit via threading"""
     def deco(func: callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -1120,7 +1162,8 @@ def Timeout(timeout: int) -> bool:
 
 # noinspection PyCallingNonCallable
 def wmi_connectable() -> bool:
-    x = Timeout(timeout=1.5)(WMI_connectable_wrap)
+    """timed out test to check that the computer is connectable via WMI"""
+    x = Timeout(timeout=1.5)(WMI_connectable_actual)
     try:
         y = x()
     except TimeoutException:
@@ -1130,14 +1173,12 @@ def wmi_connectable() -> bool:
         log()
         config.wmi_connectable = False
         return False
-    if y:
-        config.reg_connectable = True
-    else:
-        config.reg_connectable = False
+    config.reg_connectable = True if y else False
     return y
 
 
-def WMI_connectable_wrap() -> bool:
+def WMI_connectable_actual() -> bool:
+    """"the actual WMI_connectable check"""
     pc = config.current_computer
     try:
         pythoncom.CoInitialize()
@@ -1148,15 +1189,18 @@ def WMI_connectable_wrap() -> bool:
         return False
 
 
-def get_space(pc: str, disk="c") -> float:
+def get_space(pc: str, disk: str = "c") -> float:
+    """"returns the free space in the disk in GB"""
     return disk_usage(fr"\\{pc}\{disk}$").free / (1024 ** 3)
 
 
-def get_total_space(pc: str, disk="c") -> float:
+def get_total_space(pc: str, disk: str = "c") -> float:
+    """"returns the total space in the disk in GB"""
     return disk_usage(fr"\\{pc}\{disk}$").total / (1024 ** 3)
 
 
-def pc_in_domain(pc: str) -> str:
+def pc_in_domain(pc: str) -> str | None:
+    """"query if the computer is in the domain"""
     ad = adquery.ADQuery()
     ad.execute_query(
         attributes=["name"],
@@ -1171,6 +1215,7 @@ def pc_in_domain(pc: str) -> str:
 
 
 def user_exists(username_: str) -> bool:
+    """checks if a user exists in the domain"""
     ad = adquery.ADQuery()
     ad.execute_query(
         attributes=["sAMAccountName"],
@@ -1183,7 +1228,8 @@ def user_exists(username_: str) -> bool:
     return False
 
 
-def query_user(username_: str) -> str:
+def query_user(username_: str) -> int:
+    """"checks the user status in the domain, such as locked, disabled, expired, password expired"""
     ad = adquery.ADQuery()
     ad.execute_query(
         attributes=["sAMAccountName", "userAccountControl"],
@@ -1223,14 +1269,15 @@ def query_user(username_: str) -> str:
     return 0
 
 
-# check if user is currently on computer
-def check_pc_active_wrap(pc: str) -> bool:
+def check_pc_active_actual(pc: str) -> bool:
+    """checks if the computer is reachable via UNC pathing"""
     return path.exists(fr"\\{pc}\c$")
 
 
 def check_pc_active(pc=None):
+    """"timed out check if the computer is online and reachable"""
     # noinspection PyCallingNonCallable
-    x = Timeout(timeout=3)(check_pc_active_wrap)
+    x = Timeout(timeout=3)(check_pc_active_actual)
     try:
         y = x(pc=pc)
     except TimeoutException:
@@ -1242,8 +1289,8 @@ def check_pc_active(pc=None):
     return y
 
 
-# get username from remote PC
-def get_username(pc: str) -> str:
+def get_username(pc: str) -> str | None:
+    """retrieves the active user on the remote computer"""
     try:
         con = WMI(computer=pc)
         rec = con.query("SELECT * FROM Win32_ComputerSystem")
@@ -1266,8 +1313,8 @@ def get_username(pc: str) -> str:
         log()
 
 
-# AD translation username to displayname
-def user_name_trasnslation(username_: str) -> str:
+def user_name_translation(username_: str) -> str | None:
+    """returns the display name of a user in the domain"""
     ad = adquery.ADQuery()
     ad.execute_query(
         attributes=["displayName"],
@@ -1280,37 +1327,17 @@ def user_name_trasnslation(username_: str) -> str:
     return username_
 
 
-def date_is_older(date_string):
+def date_is_older(date_string: datetime.strptime) -> bool:
+    """checks if the initial date has passed"""
     provided_date = datetime.strptime(date_string, "%d/%m/%Y %H:%M:%S")
     return provided_date < datetime.now()
 
 
-# Add member to AD group
-def add_member(username_: str, groupname: str) -> None:
+def on_rm_error(_: callable, path_: str, error: tuple) -> None:
+    """deletes readonly files via changing permission to the file or directory"""
+    if error[0] != PermissionError:
+        return
     try:
-        group_name = adgroup.ADGroup.from_cn(groupname)
-        user_cn = None
-        ad = adquery.ADQuery()
-        ad.execute_query(
-            attributes=["cn"],
-            where_clause=f"sAMAccountName='{username_}'",
-            base_dn=config.domain
-        )
-
-        result = ad.get_results()
-        for u in result:
-            user_cn = u["cn"]
-        user_cn = aduser.ADUser.from_cn(user_cn)
-        if user_cn:
-            group_name.add_members([user_cn])
-    except:
-        log()
-
-
-def on_rm_error(_: callable, path_: path, error: tuple) -> None:
-    try:
-        if error[0] != PermissionError:
-            return
         chmod(path_, S_IWRITE)
         if path.isfile(path_):
             unlink(path_)
@@ -1324,6 +1351,7 @@ def on_rm_error(_: callable, path_: path, error: tuple) -> None:
 
 # noinspection PyCallingNonCallable
 def reg_connect() -> bool:
+    """timed check if the registry is connectable"""
     x = Timeout(timeout=1.5)(is_reg)
     try:
         y = x()
@@ -1334,14 +1362,12 @@ def reg_connect() -> bool:
         config.reg_connectable = False
         log()
         return False
-    if y:
-        config.reg_connectable = True
-    else:
-        config.reg_connectable = False
+    config.reg_connectable = True if y else False
     return y
 
 
 def is_reg(pc: str = None) -> bool:
+    """checks if the remote registry is connectable"""
     if not pc:
         pc = config.current_computer
     try:
@@ -1355,6 +1381,7 @@ def is_reg(pc: str = None) -> bool:
 
 
 def is_ie_fixed(pc: str) -> bool:
+    """checks if Internet Explorer is fixed via querying the registry keys"""
     try:
         with ConnectRegistry(pc, HKEY_LOCAL_MACHINE) as reg_:
             try:
@@ -1374,6 +1401,7 @@ def is_ie_fixed(pc: str) -> bool:
 
 
 def is_cpt_fixed(pc: str) -> bool:
+    """checks if cockpit printer is fixed via querying the registry keys"""
     try:
         with ConnectRegistry(pc, HKEY_CURRENT_USER) as reg_:
             try:
