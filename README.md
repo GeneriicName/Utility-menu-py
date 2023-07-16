@@ -4,7 +4,7 @@ A utility menu I made while working as a help desk. It was made in between calls
 
 ## Installation
 
-```bash
+```batch
 git clone https://github.com/GeneriicName/Utility-menu-py
 cd Utility-menu-py
 pip install -r requirements.txt
