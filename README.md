@@ -53,13 +53,13 @@ This is an example of the config file which is included with the directory, the 
 
 }
 ```
-**To use this script with usernames as well as hostnames, you will need a user.txt file containing the computer name from which the last user has logged on. You can easily achieve this with a simple batch logon script/GPO/task, and the location to which the files are dumped needs to be configured in the config.json file.**
+**To use this script with usernames as well as hostnames, you will need a user.txt file containing the computer name from which the last user has logged on for each user. You can easily achieve this with a simple batch logon script/GPO/task, and the location to which the files are dumped needs to be configured in the config.json file.**
 
 ***Example logon script***
 
 ```batch
 @echo off
-echo %computername% > "C:\Users\betza\Desktop\%username%.txt"
+echo %computername% > "\\server\folder\%username%.txt"
 ```
 
 ## Features
