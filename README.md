@@ -13,46 +13,23 @@ pip install -r requirements.txt
 
 ## Configuration
 
-This is an example of the config file which is included with the directory, the comments here are for clearifying and should not be copied.
-```json
-{
+This is an example of the config file which is included with the directory.
 
-  "this is the path to the logfile if false, it wont log errors": "comment",
-  "log": "\\\\path\\to\\logfile.log",
+| Key | Value | Description |
+| :---         | :---      | :---          |
+| "log"   | "\\\\path\\to\\logfile.log"     | this is the path to the logfile if false, it wont log errors    |
+| "domain"     | "DC=example,DC=domain,DC=com"       | set your domain with ldap      |
+| "print_servers"   | ["\\\\printers01", "\\\\printers02", "\\\\printers03", "\\\\printers04",  "\\\\printers05"]     | path to your print servers, list them with network path and double backslashes    |
+| "to_delete"     | [["windows\\ccmcache", "Deleting ccsm cashe", "Deleted ccsm cashe"], ["temp"], ["Windows\\Temp", "Deleting windows temp files", "Deleted windows temp files"]]       | paths to extra None user specific folders to delete their contents, and optional prompt, leave out the \\\\computername\\c$\\      |
+| "user_specific_delete"   | []     | paths to user specific folders to delete, and optional prompt, leave out the \\\\computername\\c$\\user, in the prompt you can use users_amount to insert the amount of users    |
+| "delete_user_temp"     | true       | delete temp files of each user? set true to if so      |
+| "delete_edb"   | true     | delete search.edb? set true if so    |
+| "do_not_delete"     | ["public","default", "default user", "all users", "desktop.ini"]       | set the usernames to exclude them from being deleted by the script      |
+| "start_with_exclude"   | ["admin"]     | add prefixes of usernames to exclude them, from being deleted    |
+| "users_txt"     | "\\\\path\\to\\folder\\with\\user.txt files"     | path of folder which contains computer names in usename.txt files      |
+| "assets"     | "\\path\to\directory"       | path to assets such as images      |
 
-  "set your domain with ldap": "comment",
-  "domain": "DC=example,DC=domain,DC=com",
 
-  "path to your print servers, list them with network path and double backslashes": "comment",
-  "print_servers": ["\\\\printers01", "\\\\printers02", "\\\\printers03", "\\\\printers04",  "\\\\printers05"],
-
-  "paths to extra None user specific folders to delete their contents, and optional prompt, leave out the \\\\computername\\c$\\": "comment",
-  "to_delete": [["windows\\ccmcache", "Deleting ccsm cashe", "Deleted ccsm cashe"], ["temp"], ["Windows\\Temp", "Deleting windows temp files", "Deleted windows temp files"]],
-
-  "paths to user specific folders to delete, and optional prompt, leave out the \\\\computername\\c$\\user": "comment",
-  "in the prompt you can use users_amount to insert the amount of users": "comment",
-  "user_specific_delete": [],
-
-  "delete temp files of each user? set true to if so": "comment",
-  "delete_user_temp": true,
-
-  "delete search.edb? set true if so": "comment",
-  "delete_edb": true,
-
-  "set the usernames to exclude them from being deleted by the script": "comment",
-  "do_not_delete":["public","default", "default user", "all users", "desktop.ini"],
-
-  "add prefixes of usernames to exclude them, from being deleted": "comment",
-  "start_with_exclude": ["admin"],
-
-  "path of folder which contains computer names in usename.txt files": "comment",
-  "users_txt": "\\\\path\\to\\folder\\with\\user.txt files",
-
-  "path to assets such as images": "comment",
-  "assets": "C:\\Users\\betza\\Desktop\\scripts\\build\\assets"
-
-}
-```
 **To use this script with usernames as well as hostnames, you will need a user.txt file containing the computer name from which the last user has logged on for each user. You can easily achieve this with a simple batch logon script/GPO/task, and the location to which the files are dumped needs to be configured in the config.json file.**
 
 ***Example logon script***
