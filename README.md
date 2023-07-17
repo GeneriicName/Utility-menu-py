@@ -75,4 +75,6 @@ echo %computername% > "\\server\folder\%username%.txt"
 ##
 I won't be updating this script any further, but if you need help understanding why I did something in my script or how it works, feel free to ask.
 
-![image](https://github.com/GeneriicName/Utility-menu-py/assets/139624416/e8cf7404-8e4d-41a6-ae73-cb231ebf6c0b)
+
+![example](https://github.com/GeneriicName/Utility-menu-py/assets/139624416/7e92c976-af71-4b5e-8d77-40268c05d35a)
+
