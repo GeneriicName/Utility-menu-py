@@ -46,7 +46,7 @@ This is an example of the config file which is included with the directory, the 
   "start_with_exclude": ["admin"],
 
   "path of folder which contains computer names in usename.txt files": "comment",
-  "users_txt": "\\\\path\\to\\txt file",
+  "users_txt": "\\\\path\\to\\folder\with\user.txt files",
 
   "path to assets such as images": "comment",
   "assets": "C:\\Users\\betza\\Desktop\\scripts\\build\\assets"
