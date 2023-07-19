@@ -9,5 +9,6 @@
   "do_not_delete":["public","default", "default user", "all users", "desktop.ini"],
   "start_with_exclude": ["username"],
   "users_txt": "\\\\path\\to\\txt file",
-  "assets": "\\\\path\\to\\images"
+  "assets": "\\\\path\\to\\images",
+  "title": "your title here"
 }
