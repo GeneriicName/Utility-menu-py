@@ -156,7 +156,7 @@ def hide_text(_) -> None:
 
 
 def enable_paste(event) -> None:
-    """"enables pasting to the computer entry while the keyboad language isn't in english"""
+    """"enable pasting to the computer entry while the keyboard language isn't in english"""
     ctrl = (event.state & 0x4) != 0
 
     if event.keycode == 86 and ctrl and event.keysym.lower() != "v":
@@ -516,7 +516,7 @@ def rmtree_recreate(dir_: str, bar_: callable = None) -> None:
 
 def clear_space_func() -> None:
     """clears spaces from the remote computer, paths, and other configurations as for which files to delete
-    can be configured via the config file. uses multithreading to delete the files faster"""
+    can be configured via the config file. using multithreading to delete the files faster"""
     refresh()
     pc = config.current_computer
     users_dirs = listdir(fr"\\{pc}\c$\users")
@@ -1074,7 +1074,7 @@ class SetConfig:
                                  len(path_with_msg) > 1]
         self.u_paths_without_msg = [path_without_msg for path_without_msg in self.config_file["user_specific_delete"] if
                                     len(path_without_msg) == 1]
-        self.users_txt = self.config_file["users_txt"]
+        self.users_txt = self.config_file["users txt"]
         self.current_computer = None
         self.current_user = None
         self.exclude = self.config_file["do_not_delete"]
