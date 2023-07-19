@@ -1,5 +1,7 @@
 from __future__ import annotations
 import sys
+import tkinter
+
 import pythoncom
 from os import path, unlink, listdir, mkdir, rename, chmod, environ
 from stat import S_IWRITE
@@ -23,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from psutil import disk_usage
 from pyad import adquery
 import tkinter.messagebox
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, INSERT, messagebox, END, ttk, CENTER, SEL
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, INSERT, messagebox, END, ttk, CENTER, SEL, Event
 
 
 def redirect(output: str) -> None:
@@ -76,7 +78,7 @@ def update(obj: Text, statement: str) -> None:
     obj.configure(state="disabled")
 
 
-def update_error(obj: tkinter.Text, initial: str, statement: str | timedelta) -> None:
+def update_error(obj: Text, initial: str, statement: str | timedelta) -> None:
     """"updates red text into an object"""
     obj.configure(state="normal")
     obj.tag_configure('red', foreground='red')
@@ -142,21 +144,21 @@ def enable() -> None:
         gui.fix_cpt.configure(state="disabled", cursor="arrow")
 
 
-def show_text(_) -> None:
+def show_text(_: Event) -> None:
     """"puts the default text in the computer entry box if its empty and isn't focused"""
     if gui.computer.get() == "Computer or User":
         gui.computer.delete(0, END)
         gui.computer.config(justify="center")
 
 
-def hide_text(_) -> None:
+def hide_text(_: Event) -> None:
     """hides the default text once the user starts interacting with the computer entry box"""
     if gui.computer.get() == "":
         gui.computer.insert(0, "Computer or User")
         gui.computer.config(justify="center")
 
 
-def enable_paste(event) -> None:
+def enable_paste(event: Event) -> None:
     """"enable pasting to the computer entry while the keyboard language isn't in english"""
     ctrl = (event.state & 0x4) != 0
 
@@ -180,7 +182,7 @@ def copy_clip(to_copy: str) -> None:
     cp.destroy()
 
 
-def on_button_press(_, __, button, ___):
+def on_button_press(_: float, __: float, button: Button, ___: bool):
     """bring the app to the front when the middle mouse button is pressed"""
     if button == mouse.Button.middle:
         if gui.root.wm_state() == 'iconic':
@@ -191,13 +193,13 @@ def on_button_press(_, __, button, ___):
             gui.root.iconify()
 
 
-def disable_middle_click(event):
+def disable_middle_click(event: Event):
     """"disables middle mouse presses"""
     if event.num == 2:
         return "break"
 
 
-def ignore_selection(obj, _):
+def ignore_selection(obj: Text, _: Event):
     """prevents the user from being able to select and mark text on the Text boxes which display info"""
     obj.tag_remove(SEL, "1.0", END)
     return "break"
@@ -208,12 +210,12 @@ def asset(filename: str) -> str:
     return fr"{config.assets}\{filename}"
 
 
-def create_selection_window(options):
+def create_selection_window(options: list) -> None:
     """creates a selection window with checkboxes to choose which users to delete"""
     config.yes_no = False
     config.wll_delete = []
 
-    def on_done():
+    def on_done() -> None:
         """cleans up after the main function and give last warning before deleting the users folders"""
         newline = "\n"
         selected_options = [check.get() for check in option_vars if check.get()]
@@ -234,7 +236,7 @@ def create_selection_window(options):
         config.yes_no = False
         return
 
-    def disable_main_window(selection_window_):
+    def disable_main_window(selection_window_: tkinter.Toplevel) -> None:
         """disables the main window and brings the selection box to the front"""
         def on_window_close():
             """"deletes the checkbox window and unbind middle mouse wheel from scrolling in the checkbox window"""
@@ -247,7 +249,7 @@ def create_selection_window(options):
         selection_window.protocol("WM_DELETE_WINDOW", on_window_close)
         gui.root.wait_window(selection_window)
 
-    def on_mousewheel(event):
+    def on_mousewheel(event: Event) -> None:
         """"enables scrolling in the checkbox window via middle mouse wheel, in case there are over 10 users"""
         canvas_.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
@@ -289,7 +291,7 @@ def create_selection_window(options):
 
 class ProgressBar:
     """"an easily deployable progressbar which can be called via a with statement"""
-    def __init__(self, total_items, title_, end_statement):
+    def __init__(self, total_items: int, title_: str, end_statement: str = ""):
         """"initial configuration of the progressbar"""
         self.total_items = total_items
         self.title = title_
@@ -346,7 +348,7 @@ def fix_ie_func() -> None:
     compatibility mode"""
     pc = config.current_computer
     if not reg_connect():
-        print_error(gui.root, output="Could not fix internet explorer", newline=True)
+        print_error(gui.console, output="Could not fix internet explorer", newline=True)
     refresh()
     with ConnectRegistry(pc, HKEY_LOCAL_MACHINE) as reg:
         for key_name in (
@@ -361,7 +363,7 @@ def fix_ie_func() -> None:
             except FileNotFoundError:
                 pass
             except:
-                print_error(gui.root, output="Unable to fix internet explorer", newline=True)
+                print_error(gui.console, output="Unable to fix internet explorer", newline=True)
                 log()
                 return
 
@@ -376,14 +378,14 @@ def fix_ie_func() -> None:
     except:
         log()
 
-    update(gui.root, "Internet explorer: Fixed")
-    print_success(gui.root, output=f"Fixed internet explorer", newline=True)
+    update(gui.ie_fixed, "Internet explorer: Fixed")
+    print_success(gui.console, output=f"Fixed internet explorer", newline=True)
 
 
 def fix_cpt_func() -> None:
     """"fixes cockpit printer via deleting the appropriate registry keys"""
     if not reg_connect():
-        print_error(gui.root, output="ERROR, could not connect to remote registry", newline=True)
+        print_error(gui.console, output="ERROR, could not connect to remote registry", newline=True)
         return
     refresh()
     with ConnectRegistry(config.current_computer, HKEY_CURRENT_USER) as reg:
