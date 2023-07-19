@@ -28,6 +28,7 @@ This is an example of the config file which is included with the directory.
 | "start_with_exclude"   | ["admin"]     | add prefixes of usernames to exclude them, from being deleted    |
 | "users_txt"     | "\\\\path\\to\\folder\\with\\user.txt files"     | path of folder which contains computer names in usename.txt files      |
 | "assets"     | "\\path\to\directory"       | path to assets such as images      |
+| "title"     | "hello world!"       | give a title to your GUI window      |
 
 
 **To use this script with usernames as well as hostnames, you will need a user.txt file containing the computer name from which the last user has logged on for each user. You can easily achieve this with a simple batch logon script/GPO/task, and the location to which the files are dumped needs to be configured in the config.json file.**
