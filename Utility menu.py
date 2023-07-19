@@ -1,3 +1,4 @@
+from __future__ import annotations
 import sys
 import pythoncom
 from os import path, unlink, listdir, mkdir, rename, chmod, environ
@@ -27,10 +28,10 @@ from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, INSERT, message
 
 def redirect(output: str) -> None:
     """redirects all output to the console Text object"""
-    console.configure(state="normal")
-    console.insert(END, output)
-    console.see(END)
-    console.configure(state="disabled")
+    gui.console.configure(state="normal")
+    gui.console.insert(END, output)
+    gui.console.see(END)
+    gui.console.configure(state="disabled")
 
 
 def print_error(obj: Text, output: str = "", additional: str = "", clear_: bool = False, see: bool = False,
@@ -103,10 +104,10 @@ def tsleep(secs: float) -> None:
 
 def clear_all() -> None:
     """"clears all objects in the gui window, and sets their default text"""
-    for obj in [[display_pc, "Current computer: "], [computer_status, "Computer status: "], [console, ""],
-                [display_user, "Current user: "], [uptime, "Uptime: "], [space_c, "Space in C disk: "],
-                [space_d, "Space in D disk: "], [ram, "Total RAM: "], [ie_fixed, "Internet explorer: "],
-                [cpt_fixed, "Cockpit printer: "], [user_active, "User status: "]]:
+    for obj in [[gui.display_pc, "Current computer: "], [gui.computer_status, "Computer status: "], [gui.console, ""],
+                [gui.display_user, "Current user: "], [gui.uptime, "Uptime: "], [gui.space_c, "Space in C disk: "],
+                [gui.space_d, "Space in D disk: "], [gui.ram, "Total RAM: "], [gui.ie_fixed, "Internet explorer: "],
+                [gui.cpt_fixed, "Cockpit printer: "], [gui.user_active, "User status: "]]:
         obj[0].configure(state="normal")
         obj[0].delete("1.0", END)
         obj[0].insert(INSERT, obj[1])
@@ -118,41 +119,41 @@ def clear_all() -> None:
 def disable(disable_submit: bool = False) -> None:
     """"disables all the buttons, so they aren't clickable while a function is still executing, also disables submitting
     by pressing the enter key"""
-    computer.unbind("<Return>")
-    for obj in (reset_spool, fix_cpt, fix_ie, clear_space, get_printers, delete_ost, delete_users, fix_3_lang,
-                copy_but):
+    gui.computer.unbind("<Return>")
+    for obj in (gui.reset_spool, gui.fix_cpt, gui.fix_ie, gui.clear_space, gui.get_printers, gui.delete_ost, 
+                gui.delete_users, gui.fix_3_lang, gui.copy_but):
         obj.configure(state="disabled", cursor="arrow")
     if disable_submit:
-        submit.configure(state="disabled")
+        gui.submit.configure(state="disabled")
     if config.first_time:
         config.first_time = 0
-        computer.bind("<Return>", lambda _: on_submit())
-        submit.configure(cursor="hand2")
+        gui.computer.bind("<Return>", lambda _: on_submit())
+        gui.submit.configure(cursor="hand2")
 
 
 def enable() -> None:
     """"enables the buttons back, also makes submitted by pressing enter enabled again"""
-    for obj in (reset_spool, fix_cpt, fix_ie, clear_space, get_printers, delete_ost, delete_users, fix_3_lang, submit,
-                copy_but):
+    for obj in (gui.reset_spool, gui.fix_cpt, gui.fix_ie, gui.clear_space, gui.get_printers, gui.delete_ost, 
+                gui.delete_users, gui.fix_3_lang, gui.submit, gui.copy_but):
         obj.configure(state="normal", cursor="hand2")
-    computer.bind("<Return>", lambda _: on_submit())
+    gui.computer.bind("<Return>", lambda _: on_submit())
     if not config.current_user:
-        delete_ost.configure(state="disabled", cursor="arrow")
-        fix_cpt.configure(state="disabled", cursor="arrow")
+        gui.delete_ost.configure(state="disabled", cursor="arrow")
+        gui.fix_cpt.configure(state="disabled", cursor="arrow")
 
 
 def show_text(_) -> None:
     """"puts the default text in the computer entry box if its empty and isn't focused"""
-    if computer.get() == "Computer or User":
-        computer.delete(0, END)
-        computer.config(justify="center")
+    if gui.computer.get() == "Computer or User":
+        gui.computer.delete(0, END)
+        gui.computer.config(justify="center")
 
 
 def hide_text(_) -> None:
     """hides the default text once the user starts interacting with the computer entry box"""
-    if computer.get() == "":
-        computer.insert(0, "Computer or User")
-        computer.config(justify="center")
+    if gui.computer.get() == "":
+        gui.computer.insert(0, "Computer or User")
+        gui.computer.config(justify="center")
 
 
 def enable_paste(event) -> None:
@@ -162,10 +163,10 @@ def enable_paste(event) -> None:
     if event.keycode == 86 and ctrl and event.keysym.lower() != "v":
         event.widget.event_generate("<<Paste>>")
 
-    if event.keycode == 67 and ctrl and event.keysym.lower() != "c":
+    elif event.keycode == 67 and ctrl and event.keysym.lower() != "c":
         event.widget.event_generate("<<Copy>>")
 
-    if event.keycode == 65 and ctrl and event.keysym.lower() != "a":
+    elif event.keycode == 65 and ctrl and event.keysym.lower() != "a":
         event.widget.event_generate("<<SelectAll>>")
 
 
@@ -182,12 +183,12 @@ def copy_clip(to_copy: str) -> None:
 def on_button_press(_, __, button, ___):
     """bring the app to the front when the middle mouse button is pressed"""
     if button == mouse.Button.middle:
-        if window.wm_state() == 'iconic':
-            window.deiconify()
-            window.lift()
-            window.focus_set()
+        if gui.root.wm_state() == 'iconic':
+            gui.root.deiconify()
+            gui.root.lift()
+            gui.root.focus_set()
         else:
-            window.iconify()
+            gui.root.iconify()
 
 
 def disable_middle_click(event):
@@ -218,7 +219,7 @@ def create_selection_window(options):
         selected_options = [check.get() for check in option_vars if check.get()]
         canvas_.unbind_all("<MouseWheel>")
         selection_window.destroy()
-        window.focus_set()
+        gui.root.focus_set()
         if not selected_options:
             print("No users were chosen to be deleted")
             config.yes_no = False
@@ -237,20 +238,20 @@ def create_selection_window(options):
         """disables the main window and brings the selection box to the front"""
         def on_window_close():
             """"deletes the checkbox window and unbind middle mouse wheel from scrolling in the checkbox window"""
-            window.grab_release()
+            gui.root.grab_release()
             selection_window_.destroy()
             canvas_.unbind_all("<MouseWheel>")
             print("Canceled users deletion")
 
-        window.grab_set()
+        gui.root.grab_set()
         selection_window.protocol("WM_DELETE_WINDOW", on_window_close)
-        window.wait_window(selection_window)
+        gui.root.wait_window(selection_window)
 
     def on_mousewheel(event):
         """"enables scrolling in the checkbox window via middle mouse wheel, in case there are over 10 users"""
         canvas_.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-    selection_window = tkinter.Toplevel(window)
+    selection_window = tkinter.Toplevel(gui.root)
     selection_window.title("Select users")
 
     canvas_ = tkinter.Canvas(selection_window, height=200)
@@ -294,7 +295,7 @@ class ProgressBar:
         self.title = title_
         self.current_item = 0
 
-        self.root = window
+        self.root = gui.root
         self.end_statement = end_statement
 
         self.label = tkinter.Label(self.root, text=self.title, background="#545664",
@@ -310,7 +311,8 @@ class ProgressBar:
                             ('Horizontal.Progressbar.label', {'sticky': 'nswe'})])
         ttk.Style().configure('text.Horizontal.TProgressbar', text='0 %', anchor='center',
                               foreground='black')
-        self.progressbar = ttk.Progressbar(window, length=297, mode="determinate", style='text.Horizontal.TProgressbar')
+        self.progressbar = ttk.Progressbar(self.root, length=297, mode="determinate",
+                                           style='text.Horizontal.TProgressbar')
         self.progressbar.place(x=450.0, y=440.0)
 
     def __enter__(self):
@@ -335,8 +337,8 @@ class ProgressBar:
 
 def refresh() -> None:
     """refreshes the main window"""
-    window.update_idletasks()
-    window.update()
+    gui.root.update_idletasks()
+    gui.root.update()
 
 
 def fix_ie_func() -> None:
@@ -344,7 +346,7 @@ def fix_ie_func() -> None:
     compatibility mode"""
     pc = config.current_computer
     if not reg_connect():
-        print_error(console, output="Could not fix internet explorer", newline=True)
+        print_error(gui.root, output="Could not fix internet explorer", newline=True)
     refresh()
     with ConnectRegistry(pc, HKEY_LOCAL_MACHINE) as reg:
         for key_name in (
@@ -359,7 +361,7 @@ def fix_ie_func() -> None:
             except FileNotFoundError:
                 pass
             except:
-                print_error(console, output="Unable to fix internet explorer", newline=True)
+                print_error(gui.root, output="Unable to fix internet explorer", newline=True)
                 log()
                 return
 
@@ -374,14 +376,14 @@ def fix_ie_func() -> None:
     except:
         log()
 
-    update(ie_fixed, "Internet explorer: Fixed")
-    print_success(console, output=f"Fixed internet explorer", newline=True)
+    update(gui.root, "Internet explorer: Fixed")
+    print_success(gui.root, output=f"Fixed internet explorer", newline=True)
 
 
 def fix_cpt_func() -> None:
     """"fixes cockpit printer via deleting the appropriate registry keys"""
     if not reg_connect():
-        print_error(console, output="ERROR, could not connect to remote registry", newline=True)
+        print_error(gui.root, output="ERROR, could not connect to remote registry", newline=True)
         return
     refresh()
     with ConnectRegistry(config.current_computer, HKEY_CURRENT_USER) as reg:
@@ -392,16 +394,16 @@ def fix_cpt_func() -> None:
             pass
         except:
             log()
-            print_error(console, output="Failed to fix cpt printer", newline=True)
+            print_error(gui.console, output="Failed to fix cpt printer", newline=True)
             return
-    print_success(console, output="Fixed cpt printer", newline=True)
-    update(cpt_fixed, "Cockpit printer: Fixed")
+    print_success(gui.console, output="Fixed cpt printer", newline=True)
+    update(gui.cpt_fixed, "Cockpit printer: Fixed")
 
 
 def fix_3_languages() -> None:
     """fixes 3 languages bug via deleting the appropriate registry keys"""
     if not reg_connect():
-        print_error(console, output="ERROR, could not connect to remote registry", newline=True)
+        print_error(gui.console, output="ERROR, could not connect to remote registry", newline=True)
         return
     refresh()
     with ConnectRegistry(config.current_computer, HKEY_USERS) as reg:
@@ -412,10 +414,10 @@ def fix_3_languages() -> None:
         except FileNotFoundError:
             pass
         except:
-            print_error(console, output="Failed to fix 3 languages bug", newline=True)
+            print_error(gui.console, output="Failed to fix 3 languages bug", newline=True)
             log()
             return
-    print_success(console, output="Fixed 3 languages bug", newline=True)
+    print_success(gui.console, output="Fixed 3 languages bug", newline=True)
 
 
 def reset_spooler() -> None:
@@ -430,9 +432,9 @@ def reset_spooler() -> None:
         tsleep(1)
         refresh()
         service[0].StartService()
-        print_success(console, output=f"Successfully restarted the spooler", newline=True)
+        print_success(gui.console, output=f"Successfully restarted the spooler", newline=True)
     except:
-        print_error(console, output=f"Failed to restart the spooler", newline=True)
+        print_error(gui.console, output=f"Failed to restart the spooler", newline=True)
         log()
 
 
@@ -444,7 +446,7 @@ def delete_the_ost() -> None:
     if not tkinter.messagebox.askyesno(title="OST deletion",
                                        message=f"Are you sure you want to delete "
                                                f"the ost of {user_name_translation(user_)}?"):
-        print_error(console, output="Canceled OST deletion", newline=True)
+        print_error(gui.console, output="Canceled OST deletion", newline=True)
         return
     try:
         host = WMI(computer=pc)
@@ -457,34 +459,33 @@ def delete_the_ost() -> None:
                     except:
                         log()
     except:
-        print_error(console, output="Could not connect to the computer", newline=True)
+        print_error(gui.console, output="Could not connect to the computer", newline=True)
         log()
         return
-    if path.exists(fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook"):
-        ost = listdir(fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook")
-        for file in ost:
-            if file.endswith("ost"):
-                ost = fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook\{file}"
+    if not path.exists(fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook"):
+        print_error(gui.console, f"Could not find an OST file", newline=True)
+        return
+
+    ost = listdir(fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook")
+    for file in ost:
+        if file.endswith("ost"):
+            ost = fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook\{file}"
+            try:
+                tsleep(1)
+                rename(ost, f"{ost}{random():.3f}.old")
+                print_success(gui.console, output=f"Successfully removed the ost file", newline=True)
+            except FileExistsError:
                 try:
-                    tsleep(1)
                     rename(ost, f"{ost}{random():.3f}.old")
-                    print_success(console, output=f"Successfully removed the ost file", newline=True)
-                except FileExistsError:
-                    try:
-                        rename(ost, f"{ost}{random():.3f}.old")
-                        print_success(console, output=f"Successfully removed the ost file", newline=True)
-                    except:
-                        log()
-                        print_error(console, f"Could not Delete the OST file", newline=True)
+                    print_success(gui.console, output=f"Successfully removed the ost file", newline=True)
                 except:
-                    print_error(console, f"Could not Delete the OST file", newline=True)
                     log()
-                return
-        else:
-            print_error(console, f"Could not find an OST file", newline=True)
-            return
+                    print_error(gui.console, f"Could not Delete the OST file", newline=True)
+            except:
+                print_error(gui.console, f"Could not Delete the OST file", newline=True)
+                log()
     else:
-        print_error(console, f"Could not find an OST file", newline=True)
+        print_error(gui.console, f"Could not find an OST file", newline=True)
 
 
 def my_rm(file_: str, bar_: callable) -> None:
@@ -557,7 +558,7 @@ def clear_space_func() -> None:
                         jobs = [executor.submit(my_rm, file, bar) for file in files]
                         while not all([result.done() for result in jobs]):
                             sleep(0.1)
-                            window.update()
+                            gui.root.update()
 
     if config.delete_user_temp:
         with ProgressBar(len(users_dirs), f"Deleting temps of {len(users_dirs)} users",
@@ -569,7 +570,7 @@ def clear_space_func() -> None:
                 jobs = [executor.submit(my_rm, dir_, bar) for dir_ in dirs]
                 while not all([result.done() for result in jobs]):
                     sleep(0.1)
-                    window.update()
+                    gui.root.update()
 
     if config.u_paths_with_msg:
         for path_msg in config.u_paths_with_msg:
@@ -587,7 +588,7 @@ def clear_space_func() -> None:
                             jobs = [executor.submit(my_rm, file) for file in files]
                             while not all([result.done() for result in jobs]):
                                 sleep(0.1)
-                                window.update()
+                                gui.root.update()
                     bar()
 
     if config.u_paths_without_msg or config.c_paths_without_msg:
@@ -605,7 +606,7 @@ def clear_space_func() -> None:
                         jobs = [executor.submit(my_rm, file) for file in files]
                         while not all([result.done() for result in jobs]):
                             sleep(0.1)
-                            window.update()
+                            gui.root.update()
                 bar()
 
             for path_msg in config.u_paths_without_msg:
@@ -621,7 +622,7 @@ def clear_space_func() -> None:
                             jobs = [executor.submit(my_rm, file) for file in files]
                             while not all([result.done() for result in jobs]):
                                 sleep(0.1)
-                                window.update()
+                                gui.root.update()
                 bar()
 
     if not flag and config.delete_edb and path.exists(edb_file):
@@ -642,19 +643,18 @@ def clear_space_func() -> None:
         print(fr"Deleted the search.edb file")
     else:
         if config.delete_edb:
-            print_error(console, output="Failed to remove search.edb file", newline=True)
+            print_error(gui.console, output="Failed to remove search.edb file", newline=True)
     space_final = get_space(pc)
-    print_success(console, output=f"Cleared {abs((space_final - space_init)):.1f} GB from the disk", newline=True)
+    print_success(gui.console, output=f"Cleared {abs((space_final - space_init)):.1f} GB from the disk", newline=True)
     try:
         space = get_space(pc)
         if space <= 5:
-            update_error(space_c, "Space in C disk: ", f"{space:.1f}GB free out of "
-                                                       f"{get_total_space(pc):.1f}GB")
+            update_error(gui.space_c, "Space in C disk: ", f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB")
         else:
-            update(space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+            update(gui.space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
     except:
         log()
-        update_error(space_c, "Space in C disk: ", "ERROR")
+        update_error(gui.space_c, "Space in C disk: ", "ERROR")
 
 
 def my_rmtree(dir_: str, bar_: callable) -> None:
@@ -682,29 +682,29 @@ def del_users() -> None:
         print("No users were found to delete")
         return
     create_selection_window(users_to_choose_delete)
-    if config.yes_no:
-        refresh()
-        space_init = get_space(pc)
-        with ProgressBar(len(config.wll_delete), f"Deleting {len(config.wll_delete)} folders",
-                         f"Deleted {len(config.wll_delete)} users") as bar:
-            config.wll_delete = [fr"\\{pc}\c$\users\{dir_}" for dir_ in config.wll_delete]
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                jobs = [executor.submit(my_rmtree, dir_, bar) for dir_ in config.wll_delete]
-                while not all([result.done() for result in jobs]):
-                    sleep(0.1)
-                    window.update()
-        space_final = get_space(pc)
-        print(f"Cleared {abs((space_final - space_init)):.1f} GB from the disk")
-        try:
-            space = get_space(pc)
-            if space <= 5:
-                update_error(space_c, "Space in C disk: ", f"{space:.1f}GB free out of "
-                                                           f"{get_total_space(pc):.1f}GB")
-            else:
-                update(space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
-        except:
-            log()
-            update_error(space_c, "Space in C disk: ", "ERROR")
+    if not config.yes_no:
+        return
+    refresh()
+    space_init = get_space(pc)
+    with ProgressBar(len(config.wll_delete), f"Deleting {len(config.wll_delete)} folders",
+                     f"Deleted {len(config.wll_delete)} users") as bar:
+        config.wll_delete = [fr"\\{pc}\c$\users\{dir_}" for dir_ in config.wll_delete]
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            jobs = [executor.submit(my_rmtree, dir_, bar) for dir_ in config.wll_delete]
+            while not all([result.done() for result in jobs]):
+                sleep(0.1)
+                gui.root.update()
+    space_final = get_space(pc)
+    print(f"Cleared {abs((space_final - space_init)):.1f} GB from the disk")
+    try:
+        space = get_space(pc)
+        if space <= 5:
+            update_error(gui.space_c, "Space in C disk: ", f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+        else:
+            update(gui.space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+    except:
+        log()
+        update_error(gui.space_c, "Space in C disk: ", "ERROR")
 
 
 def get_printers_func() -> None:
@@ -739,8 +739,6 @@ def get_printers_func() -> None:
                         if username[0].startswith("C:\\"):
                             username = username[0].split("\\")[-1]
                             users_dict[sid] = user_name_translation(username)
-
-                    pass
                 except:
                     log()
         refresh()
@@ -761,7 +759,6 @@ def get_printers_func() -> None:
                             found_any = True
                         except:
                             log()
-
             except FileNotFoundError:
                 pass
             except:
@@ -822,18 +819,18 @@ def get_printers_func() -> None:
                     except:
                         log()
     if not found_any:
-        print_error(console, output=f"No printers were found", newline=True)
+        print_error(gui.console, output=f"No printers were found", newline=True)
 
 
 def run_func(func: callable) -> None:
     """passes the function to run_it after the main window is idle, and gives the button time to be unpressed
     as well as disabling the buttons"""
     disable(disable_submit=True)
-    window.after("idle", lambda: run_it(func))
+    gui.root.after("idle", lambda: run_it(func))
 
 
 def run_it(func: callable) -> None:
-    """runs the function it self, catch any exception and logs it, checks if the issue is a network issue via running
+    """runs the function itself, catch any exception and logs it, checks if the issue is a network issue via running
     on_submit when an exception is caught"""
     refresh()
     if not reg_connect():
@@ -857,17 +854,17 @@ def update_user(user_: str) -> None:
     try:
         user_s = query_user(user_)
         if user_s == 0:
-            print_success(user_active, additional="User status: ", output="Active", clear_=True)
+            print_success(gui.user_active, additional="User status: ", output="Active", clear_=True)
         elif user_s == 1:
-            update_error(user_active, "User status: ", "Disabled")
+            update_error(gui.user_active, "User status: ", "Disabled")
         elif user_s == 2:
-            update_error(user_active, "User status: ", "Locked")
+            update_error(gui.user_active, "User status: ", "Locked")
         elif user_s == 3:
-            update_error(user_active, "User status: ", "Expired")
+            update_error(gui.user_active, "User status: ", "Expired")
         elif user_s == 4:
-            update_error(user_active, "User status: ", "Password expired")
+            update_error(gui.user_active, "User status: ", "Password expired")
     except:
-        update_error(user_active, "User status: ", "ERROR")
+        update_error(gui.user_active, "User status: ", "ERROR")
 
 
 # noinspection PyUnboundLocalVariable
@@ -882,128 +879,129 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
     refresh()
     clear_all()
     if not pc:
-        pc = computer.get().strip()
+        pc = gui.computer.get().strip()
     if not pc:
         disable()
-        computer.bind("<Return>", lambda _: on_submit())
+        gui.computer.bind("<Return>", lambda _: on_submit())
         return
     disable(disable_submit=True)
     refresh()
     if pc_in_domain(pc):
-        copy_but.configure(state="normal")
+        gui.copy_but.configure(state="normal")
         copy_clip(pc)
         config.current_computer = pc
-        update(display_pc, f"Current computer: {pc}")
+        update(gui.display_pc, f"Current computer: {pc}")
         refresh()
-        if check_pc_active(pc):
-            if not wmi_connectable():
-                print_error(console, output="Could not connect to computer's WMI", newline=True)
-                submit.configure(state="normal")
-                computer.bind("<Return>", lambda _: on_submit())
-                return
-            if not reg_connect():
-                print_error(console, output="Could not connect to computer's registry", newline=True)
-                submit.configure(state="normal")
-                computer.bind("<Return>", lambda _: on_submit())
-                return
-            print_success(computer_status, "ONLINE", "Computer status: ", clear_=True)
-            refresh()
-            user_ = get_username(pc)
-            if user_:
-                config.current_user = user_
-                if not passed_user or passed_user.lower() == user_.lower():
-                    update(display_user, f"Current user: {user_name_translation(user_)}")
-                else:
-                    update_error(display_user, "Current user: ", user_)
-            else:
-                update_error(display_user, "Current user: ", "No user")
-            refresh()
-            try:
-                r_pc = WMI(pc)
-                for k in r_pc.Win32_OperatingSystem():
-                    last_boot_time = datetime.strptime(k.LastBootUpTime.split('.')[0], '%Y%m%d%H%M%S')
-                    current_time = datetime.strptime(k.LocalDateTime.split('.')[0], '%Y%m%d%H%M%S')
-                    uptime_ = current_time - last_boot_time
-                    if uptime_ > timedelta(days=7):
-                        update_error(uptime, "Uptime: ", uptime_)
-                    else:
-                        update(uptime, f"Uptime: {uptime_}")
-                    break
-            except:
-                update_error(uptime, "Uptime: ", "ERROR")
-                log()
-            refresh()
-
-            try:
-                space = get_space(pc)
-                if space <= 5:
-                    update_error(space_c, "Space in C disk: ", f"{space:.1f}GB free out of "
-                                                               f"{get_total_space(pc):.1f}GB")
-                else:
-                    update(space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
-            except:
-                log()
-                update_error(space_c, "Space in C disk: ", "ERROR")
-            refresh()
-
-            if path.exists(fr"\\{pc}\d$"):
-                try:
-                    space = get_space(pc, disk="d")
-                    if space <= 5:
-                        update_error(space_d, "Space in D disk: ", f"{space:.1f}GB free out of "
-                                                                   f"{get_total_space(pc, disk='d'):.1f}GB")
-                    else:
-                        update(space_d, f"Space in D disk: {space:.1f}GB free out of "
-                                        f"{get_total_space(pc, disk='d'):.1f}GB")
-                except:
-                    log()
-                    update_error(space_d, "Space in D disk: ", "ERROR")
-            else:
-                update_error(space_d, "Space in D disk: ", "Does not exist")
-            refresh()
-
-            try:
-                try:
-                    r_pc
-                except NameError:
-                    r_pc = WMI(pc)
-                for ram_ in r_pc.Win32_ComputerSystem():
-                    total_ram = int(ram_.TotalPhysicalMemory) / (1024 ** 3)
-                    if total_ram < 7:
-                        update_error(ram, "Total RAM: ", f"{round(total_ram)}GB")
-                    else:
-                        update(ram, f"Total RAM: {round(total_ram)}GB")
-            except:
-                update_error(ram, "Total RAM: ", "ERROR")
-                log()
-            refresh()
-
-            if is_ie_fixed(pc):
-                update(ie_fixed, "Internet explorer: Fixed")
-            else:
-                update_error(ie_fixed, "Internet explorer: ", "Not fixed")
-            refresh()
-
-            if is_cpt_fixed(pc):
-                update(cpt_fixed, "Cockpit printer: Fixed")
-            else:
-                update_error(cpt_fixed, "Cockpit printer", "Not fixed")
-            refresh()
-
-            if user_ or passed_user:
-                if passed_user:
-                    user_ = passed_user
-                update_user(user_)
-            else:
-                update_error(user_active, "User status: ", "No user")
-            refresh()
-            enable()
-        else:
-            print_error(computer_status, "OFFLINE", "Computer status: ", clear_=True)
-            submit.configure(state="normal")
-            computer.bind("<Return>", lambda _: on_submit())
+        if not check_pc_active(pc):
+            print_error(gui.computer_status, "OFFLINE", "Computer status: ", clear_=True)
+            gui.submit.configure(state="normal")
+            gui.computer.bind("<Return>", lambda _: on_submit())
             if passed_user:
                 update_user(passed_user)
+            return
+        if not wmi_connectable():
+            print_error(gui.console, output="Could not connect to computer's WMI", newline=True)
+            gui.submit.configure(state="normal")
+            gui.computer.bind("<Return>", lambda _: on_submit())
+            return
+        if not reg_connect():
+            print_error(gui.console, output="Could not connect to computer's registry", newline=True)
+            gui.submit.configure(state="normal")
+            gui.computer.bind("<Return>", lambda _: on_submit())
+            return
+
+        print_success(gui.computer_status, "ONLINE", "Computer status: ", clear_=True)
+        refresh()
+        user_ = get_username(pc)
+        if user_:
+            config.current_user = user_
+            if not passed_user or passed_user.lower() == user_.lower():
+                update(gui.display_user, f"Current user: {user_name_translation(user_)}")
+            else:
+                update_error(gui.display_user, "Current user: ", user_)
+        else:
+            update_error(gui.display_user, "Current user: ", "No user")
+        refresh()
+        try:
+            r_pc = WMI(pc)
+            for k in r_pc.Win32_OperatingSystem():
+                last_boot_time = datetime.strptime(k.LastBootUpTime.split('.')[0], '%Y%m%d%H%M%S')
+                current_time = datetime.strptime(k.LocalDateTime.split('.')[0], '%Y%m%d%H%M%S')
+                uptime_ = current_time - last_boot_time
+                if uptime_ > timedelta(days=7):
+                    update_error(gui.uptime, "Uptime: ", uptime_)
+                else:
+                    update(gui.uptime, f"Uptime: {uptime_}")
+                break
+        except:
+            update_error(gui.uptime, "Uptime: ", "ERROR")
+            log()
+        refresh()
+
+        try:
+            space = get_space(pc)
+            if space <= 5:
+                update_error(gui.space_c, "Space in C disk: ", f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+            else:
+                update(gui.space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+        except:
+            log()
+            update_error(gui.space_c, "Space in C disk: ", "ERROR")
+        refresh()
+
+        if path.exists(fr"\\{pc}\d$"):
+            try:
+                space = get_space(pc, disk="d")
+                if space <= 5:
+                    update_error(gui.space_d, "Space in D disk: ", f"{space:.1f}GB free out of "
+                                                                   f"{get_total_space(pc, disk='d'):.1f}GB")
+                else:
+                    update(gui.space_d, f"Space in D disk: {space:.1f}GB free out of "
+                                        f"{get_total_space(pc, disk='d'):.1f}GB")
+            except:
+                log()
+                update_error(gui.space_d, "Space in D disk: ", "ERROR")
+        else:
+            update_error(gui.space_d, "Space in D disk: ", "Does not exist")
+        refresh()
+
+        try:
+            try:
+                r_pc
+            except NameError:
+                r_pc = WMI(pc)
+            for ram_ in r_pc.Win32_ComputerSystem():
+                total_ram = int(ram_.TotalPhysicalMemory) / (1024 ** 3)
+                if total_ram < 7:
+                    update_error(gui.ram, "Total RAM: ", f"{round(total_ram)}GB")
+                else:
+                    update(gui.ram, f"Total RAM: {round(total_ram)}GB")
+        except:
+            update_error(gui.ram, "Total RAM: ", "ERROR")
+            log()
+        refresh()
+
+        if is_ie_fixed(pc):
+            update(gui.ie_fixed, "Internet explorer: Fixed")
+        else:
+            update_error(gui.ie_fixed, "Internet explorer: ", "Not fixed")
+        refresh()
+
+        if is_cpt_fixed(pc):
+            update(gui.cpt_fixed, "Cockpit printer: Fixed")
+        else:
+            update_error(gui.cpt_fixed, "Cockpit printer", "Not fixed")
+        refresh()
+
+        if user_ or passed_user:
+            if passed_user:
+                user_ = passed_user
+            update_user(user_)
+        else:
+            update_error(gui.user_active, "User status: ", "No user")
+        refresh()
+        enable()
+
     else:
         refresh()
         try:
@@ -1016,7 +1014,7 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
             refresh()
             if user_exists(pc):
                 refresh()
-                print_error(console, f"Could not locate the current or last computer {pc} has logged on to")
+                print_error(gui.console, f"Could not locate the current or last computer {pc} has logged on to")
                 update_user(pc)
             else:
                 refresh()
@@ -1031,13 +1029,13 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
                     copy_clip(pc)
                 else:
                     if r"\\" in pc:
-                        print_error(console, f"Could not locate printer {pc}")
+                        print_error(gui.console, f"Could not locate printer {pc}")
                     elif pc.count(".") > 2:
-                        print_error(console, f"Could not locate TCP/IP printer with ip of {pc}")
+                        print_error(gui.console, f"Could not locate TCP/IP printer with ip of {pc}")
                     else:
-                        print_error(console, f"No such user or computer in the domain {pc}")
-            submit.configure(state="normal", cursor="hand2")
-            computer.bind("<Return>", lambda _: on_submit())
+                        print_error(gui.console, f"No such user or computer in the domain {pc}")
+            gui.submit.configure(state="normal", cursor="hand2")
+            gui.computer.bind("<Return>", lambda _: on_submit())
             return
 
 
@@ -1085,6 +1083,7 @@ class SetConfig:
         self.wmi_connectable = False
         self.reg_connectable = False
         self.assets = self.config_file["assets"].replace("/", "\\")
+        self.title = self.config_file["title"]
 
 
 try:
@@ -1421,485 +1420,462 @@ def is_cpt_fixed(pc: str) -> bool:
 
 config.first_time = 1
 
-window = Tk()
 
-window.geometry("758x758")
-window.configure(bg="#545664")
-window.title("your title here")
-window.iconbitmap(asset("icon.ico"))
+class GUI:
+    def __init__(self):
+        self.root = Tk()
+        self.root.geometry("758x758")
+        self.root.configure(bg="#545664")
+        self.root.title(config.title)
+        self.root.iconbitmap(asset("icon.ico"))
+        self.canvas = Canvas(
+            self.root,
+            bg="#545664",
+            height=758,
+            width=758,
+            bd=0,
+            highlightthickness=0,
+            relief="ridge"
+        )
+        self.canvas.place(x=0, y=0)
+        self.generic_image = PhotoImage(file=asset("generic_text.png"))
+        self.user_active_bg = self.canvas.create_image(
+            236.0,
+            422.5,
+            image=self.generic_image
+        )
+        self.user_active = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.user_active.bind("<<Selection>>", lambda event_: ignore_selection(self.user_active, event_))
+        self.user_active.place(
+            x=31.0,
+            y=412.6,
+            width=410.0,
+            height=21.2
+        )
+        self.cpt_fixed_bg = self.canvas.create_image(
+            236.0,
+            392.0,
+            image=self.generic_image
+        )
+        self.cpt_fixed = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.cpt_fixed.place(
+            x=31.0,
+            y=382.2,
+            width=410.0,
+            height=21.2
+        )
+        self.cpt_fixed.bind("<<Selection>>", lambda event_: ignore_selection(self.cpt_fixed, event_))
+        self.ie_fixed_bg = self.canvas.create_image(
+            236.0,
+            361.5,
+            image=self.generic_image
+        )
+        self.ie_fixed = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.ie_fixed.bind("<<Selection>>", lambda event_: ignore_selection(self.ie_fixed, event_))
+        self.ie_fixed.place(
+            x=31.0,
+            y=351.7,
+            width=410.0,
+            height=21.2
+        )
+        self.ram_bg = self.canvas.create_image(
+            236.0,
+            330.5,
+            image=self.generic_image
+        )
+        self.ram = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.ram = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.ram.bind("<<Selection>>", lambda event_: ignore_selection(self.ram, event_))
+        self.ram.place(
+            x=31.0,
+            y=320.7,
+            width=410.0,
+            height=21.4
+        )
+        self.space_d_bg = self.canvas.create_image(
+            236.0,
+            299.5,
+            image=self.generic_image
+        )
+        self.space_d = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.space_d.bind("<<Selection>>", lambda event_: ignore_selection(self.space_d, event_))
+        self.space_d.place(
+            x=31.0,
+            y=290.0,
+            width=410.0,
+            height=21.2
+        )
+        self.space_c_bg = self.canvas.create_image(
+            236.0,
+            268.5,
+            image=self.generic_image
+        )
+        self.space_c = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.space_c.bind("<<Selection>>", lambda event_: ignore_selection(self.space_c, event_))
+        self.space_c.place(
+            x=31.0,
+            y=259.0,
+            width=410.0,
+            height=21.2
+        )
+        self.uptime_bg = self.canvas.create_image(
+            236.0,
+            237.5,
+            image=self.generic_image
+        )
+        self.uptime_bg = self.canvas.create_image(
+            236.0,
+            237.5,
+            image=self.generic_image
+        )
+        self.uptime = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.uptime.bind("<<Selection>>", lambda event_: ignore_selection(self.uptime, event_))
+        self.uptime.place(
+            x=31.0,
+            y=228.0,
+            width=410.0,
+            height=21.2
+        )
+        self.display_user_bg = self.canvas.create_image(
+            236.0,
+            206.5,
+            image=self.generic_image
+        )
+        self.display_user = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.display_user.bind("<<Selection>>", lambda event_: ignore_selection(self.display_user, event_))
+        self.display_user.place(
+            x=31.0,
+            y=197.0,
+            width=410.0,
+            height=21.2
+        )
+        self.computer_status_bg = self.canvas.create_image(
+            236.0,
+            175.5,
+            image=self.generic_image
+        )
+        self.computer_status = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.computer_status.bind("<<Selection>>", lambda event_: ignore_selection(self.computer_status, event_))
+        self.computer_status.place(
+            x=31.0,
+            y=166.0,
+            width=410.0,
+            height=21.2
+        )
+        self.rest_spool_image = PhotoImage(
+            file=asset("button_1.png"))
+        self.reset_spool = Button(
+            image=self.rest_spool_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(reset_spooler),
+            relief="flat",
+            background="#545664"
+        )
+        self.reset_spool.place(
+            x=599.0,
+            y=131.0,
+            width=128.0,
+            height=55.0
+        )
+        self.delete_ost_image = PhotoImage(
+            file=asset("button_2.png"))
+        self.delete_ost = Button(
+            image=self.delete_ost_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(delete_the_ost),
+            relief="flat",
+            background="#545664"
+        )
+        self.delete_ost.place(
+            x=461.0,
+            y=353.0,
+            width=128.0,
+            height=55.0
+        )
+        self.delete_users_image = PhotoImage(
+            file=asset("button_3.png"))
+        self.delete_users = Button(
+            image=self.delete_users_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(del_users),
+            relief="flat",
+            background="#545664"
+        )
+        self.delete_users.place(
+            x=461.0,
+            y=279.0,
+            width=128.0,
+            height=55.0
+        )
+        self.get_printers_image = PhotoImage(
+            file=asset("button_4.png"))
+        self.get_printers = Button(
+            image=self.get_printers_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(get_printers_func),
+            relief="flat",
+            background="#545664"
+        )
+        self.get_printers.place(
+            x=461.0,
+            y=205.0,
+            width=128.0,
+            height=55.0
+        )
+        self.fix_3_lang_image = PhotoImage(
+            file=asset("button_5.png"))
+        self.fix_3_lang = Button(
+            image=self.fix_3_lang_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(fix_3_languages),
+            relief="flat",
+            background="#545664"
+        )
+        self.fix_3_lang.place(
+            x=461.0,
+            y=131.0,
+            width=128.0,
+            height=55.0
+        )
+        self.fix_cpt_image = PhotoImage(
+            file=asset("button_6.png"))
+        self.fix_cpt = Button(
+            image=self.fix_cpt_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(fix_cpt_func),
+            relief="flat",
+            background="#545664"
+        )
+        self.fix_cpt.place(
+            x=599.0,
+            y=353.0,
+            width=128.0,
+            height=55.0
+        )
+        self.fix_ie_image = PhotoImage(
+            file=asset("button_7.png"))
+        self.fix_ie = Button(
+            image=self.fix_ie_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(fix_ie_func),
+            relief="flat",
+            background="#545664"
+        )
+        self.fix_ie.place(
+            x=599.0,
+            y=280.0,
+            width=128.0,
+            height=55.0
+        )
+        self.clear_space_image = PhotoImage(
+            file=asset("button_8.png"))
+        self.clear_space = Button(
+            image=self.clear_space_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: run_func(clear_space_func),
+            relief="flat",
+            background="#545664"
+        )
+        self.clear_space.place(
+            x=599.0,
+            y=205.0,
+            width=128.0,
+            height=55.0
+        )
+        self.computer_image = PhotoImage(
+            file=asset("entry_8.png"))
+        self.computer_background = self.canvas.create_image(
+            377.5,
+            27.0,
+            image=self.computer_image
+        )
+        self.computer = Entry(
+            font=("Times", 12, "bold"),
+            bd=0,
+            bg="#C2EFF9",
+            fg="#000716",
+            justify="center",
+            highlightthickness=0
+        )
+        self.computer.bind("<FocusIn>", show_text)
+        self.computer.bind("<FocusOut>", hide_text)
+        self.computer.bind_all("<Key>", enable_paste, "+")
+        self.computer.insert(INSERT, "Computer or User")
+        self.computer.bind("<Return>", lambda _: on_submit())
+        self.computer.place(
+            x=216.0,
+            y=6.0,
+            width=323.0,
+            height=40.0
+        )
+        self.submit_image = PhotoImage(
+            file=asset("button_9.png"))
+        self.submit = Button(
+            image=self.submit_image,
+            activebackground="#545664",
+            background="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=on_submit,
+            relief="flat"
+        )
+        self.submit.place(
+            x=306.0,
+            y=55.0,
+            width=146.0,
+            height=45.0
+        )
+        self.display_pc_image = PhotoImage(
+            file=asset("display_pc.png"))
+        self.display_pc_bg = self.canvas.create_image(
+            195.0,
+            142.5,
+            image=self.display_pc_image
+        )
+        self.display_pc = Text(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0,
+            font=('Arial', 12, 'bold'),
+            cursor="arrow"
+        )
+        self.display_pc.bind("<<Selection>>", lambda event_: ignore_selection(self.display_pc, event_))
+        self.display_pc.place(
+            x=31.0,
+            y=133.0,
+            width=331.0,
+            height=21.4
+        )
+        self.copy_but_image = PhotoImage(
+            file=asset("copy.png"))
+        self.copy_but = Button(
+            image=self.copy_but_image,
+            activebackground="#545664",
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: copy_clip(config.current_computer[1:-4]),
+            relief="flat",
+            background="#545664"
+        )
+        self.copy_but.place(
+            x=376.0,
+            y=130.0,
+            width=69.5,
+            height=32.5
+        )
+        self.console_image = PhotoImage(
+            file=asset("entry_10.png"))
+        self.entry_bg_10 = self.canvas.create_image(
+            379.0,
+            605.0,
+            image=self.console_image
+        )
+        self.console = Text(
+            bd=0,
+            bg="#FFFFFF",
+            fg="#000716",
+            font=('Arial', 12, 'bold'),
+            highlightthickness=0,
+            state="disabled"
+        )
+        self.console.place(
+            x=30.0,
+            y=471.5,
+            width=680.0,
+            height=269.0
+        )
+        self.root.resizable(False, False)
 
-canvas = Canvas(
-    window,
-    bg="#545664",
-    height=758,
-    width=758,
-    bd=0,
-    highlightthickness=0,
-    relief="ridge"
-)
 
-canvas.place(x=0, y=0)
-
-generic_image = PhotoImage(file=asset("generic_text.png"))
-
-user_active_bg = canvas.create_image(
-    236.0,
-    422.5,
-    image=generic_image
-)
-user_active = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-user_active.bind("<<Selection>>", lambda event_: ignore_selection(user_active, event_))
-
-user_active.place(
-    x=31.0,
-    y=412.6,
-    width=410.0,
-    height=21.2
-)
-
-cpt_fixed_bg = canvas.create_image(
-    236.0,
-    392.0,
-    image=generic_image
-)
-cpt_fixed = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-cpt_fixed.place(
-    x=31.0,
-    y=382.2,
-    width=410.0,
-    height=21.2
-)
-cpt_fixed.bind("<<Selection>>", lambda event_: ignore_selection(cpt_fixed, event_))
-
-ie_fixed_bg = canvas.create_image(
-    236.0,
-    361.5,
-    image=generic_image
-)
-ie_fixed = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-ie_fixed.bind("<<Selection>>", lambda event_: ignore_selection(ie_fixed, event_))
-
-ie_fixed.place(
-    x=31.0,
-    y=351.7,
-    width=410.0,
-    height=21.2
-)
-
-ram_bg = canvas.create_image(
-    236.0,
-    330.5,
-    image=generic_image
-)
-ram = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-ram.bind("<<Selection>>", lambda event_: ignore_selection(ram, event_))
-
-ram.place(
-    x=31.0,
-    y=320.7,
-    width=410.0,
-    height=21.4
-)
-
-space_d_bg = canvas.create_image(
-    236.0,
-    299.5,
-    image=generic_image
-)
-space_d = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-space_d.bind("<<Selection>>", lambda event_: ignore_selection(space_d, event_))
-
-space_d.place(
-    x=31.0,
-    y=290.0,
-    width=410.0,
-    height=21.2
-)
-
-space_c_bg = canvas.create_image(
-    236.0,
-    268.5,
-    image=generic_image
-)
-space_c = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-space_c.bind("<<Selection>>", lambda event_: ignore_selection(space_c, event_))
-
-space_c.place(
-    x=31.0,
-    y=259.0,
-    width=410.0,
-    height=21.2
-)
-
-uptime_bg = canvas.create_image(
-    236.0,
-    237.5,
-    image=generic_image
-)
-uptime = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-uptime.bind("<<Selection>>", lambda event_: ignore_selection(uptime, event_))
-
-uptime.place(
-    x=31.0,
-    y=228.0,
-    width=410.0,
-    height=21.2
-)
-
-display_user_bg = canvas.create_image(
-    236.0,
-    206.5,
-    image=generic_image
-)
-display_user = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-display_user.bind("<<Selection>>", lambda event_: ignore_selection(display_user, event_))
-
-display_user.place(
-    x=31.0,
-    y=197.0,
-    width=410.0,
-    height=21.2
-)
-
-entry_bg_7 = canvas.create_image(
-    236.0,
-    175.5,
-    image=generic_image
-)
-computer_status = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-computer_status.bind("<<Selection>>", lambda event_: ignore_selection(computer_status, event_))
-
-computer_status.place(
-    x=31.0,
-    y=166.0,
-    width=410.0,
-    height=21.2
-)
-
-rest_spool_image = PhotoImage(
-    file=asset("button_1.png"))
-reset_spool = Button(
-    image=rest_spool_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(reset_spooler),
-    relief="flat",
-    background="#545664"
-)
-reset_spool.place(
-    x=599.0,
-    y=131.0,
-    width=128.0,
-    height=55.0
-)
-
-delete_ost_image = PhotoImage(
-    file=asset("button_2.png"))
-delete_ost = Button(
-    image=delete_ost_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(delete_the_ost),
-    relief="flat",
-    background="#545664"
-)
-delete_ost.place(
-    x=461.0,
-    y=353.0,
-    width=128.0,
-    height=55.0
-)
-
-delete_users_image = PhotoImage(
-    file=asset("button_3.png"))
-delete_users = Button(
-    image=delete_users_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(del_users),
-    relief="flat",
-    background="#545664"
-)
-delete_users.place(
-    x=461.0,
-    y=279.0,
-    width=128.0,
-    height=55.0
-)
-
-get_printers_image = PhotoImage(
-    file=asset("button_4.png"))
-get_printers = Button(
-    image=get_printers_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(get_printers_func),
-    relief="flat",
-    background="#545664"
-)
-get_printers.place(
-    x=461.0,
-    y=205.0,
-    width=128.0,
-    height=55.0
-)
-
-fix_3_lang_image = PhotoImage(
-    file=asset("button_5.png"))
-fix_3_lang = Button(
-    image=fix_3_lang_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(fix_3_languages),
-    relief="flat",
-    background="#545664"
-)
-fix_3_lang.place(
-    x=461.0,
-    y=131.0,
-    width=128.0,
-    height=55.0
-)
-
-fix_cpt_image = PhotoImage(
-    file=asset("button_6.png"))
-fix_cpt = Button(
-    image=fix_cpt_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(fix_cpt_func),
-    relief="flat",
-    background="#545664"
-)
-fix_cpt.place(
-    x=599.0,
-    y=353.0,
-    width=128.0,
-    height=55.0
-)
-
-fix_ie_image = PhotoImage(
-    file=asset("button_7.png"))
-fix_ie = Button(
-    image=fix_ie_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(fix_ie_func),
-    relief="flat",
-    background="#545664"
-)
-fix_ie.place(
-    x=599.0,
-    y=280.0,
-    width=128.0,
-    height=55.0
-)
-
-clear_space_image = PhotoImage(
-    file=asset("button_8.png"))
-clear_space = Button(
-    image=clear_space_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: run_func(clear_space_func),
-    relief="flat",
-    background="#545664"
-)
-clear_space.place(
-    x=599.0,
-    y=205.0,
-    width=128.0,
-    height=55.0
-)
-
-computer_image = PhotoImage(
-    file=asset("entry_8.png"))
-computer_background = canvas.create_image(
-    377.5,
-    27.0,
-    image=computer_image
-)
-computer = Entry(
-    font=("Times", 12, "bold"),
-    bd=0,
-    bg="#C2EFF9",
-    fg="#000716",
-    justify="center",
-    highlightthickness=0
-)
-computer.bind("<FocusIn>", show_text)
-computer.bind("<FocusOut>", hide_text)
-computer.bind_all("<Key>", enable_paste, "+")
-computer.insert(INSERT, "Computer or User")
-computer.bind("<Return>", lambda _: on_submit())
-computer.place(
-    x=216.0,
-    y=6.0,
-    width=323.0,
-    height=40.0
-)
-
-submit_image = PhotoImage(
-    file=asset("button_9.png"))
-submit = Button(
-    image=submit_image,
-    activebackground="#545664",
-    background="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=on_submit,
-    relief="flat"
-)
-submit.place(
-    x=306.0,
-    y=55.0,
-    width=146.0,
-    height=45.0
-)
-
-display_pc_image = PhotoImage(
-    file=asset("display_pc.png"))
-
-display_pc_bg = canvas.create_image(
-    195.0,
-    142.5,
-    image=display_pc_image
-)
-display_pc = Text(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=('Arial', 12, 'bold'),
-    cursor="arrow"
-)
-display_pc.bind("<<Selection>>", lambda event_: ignore_selection(display_pc, event_))
-
-display_pc.place(
-    x=31.0,
-    y=133.0,
-    width=331.0,
-    height=21.4
-)
-
-copy_but_image = PhotoImage(
-    file=asset("copy.png"))
-
-copy_but = Button(
-    image=copy_but_image,
-    activebackground="#545664",
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: copy_clip(config.current_computer[1:-4]),
-    relief="flat",
-    background="#545664"
-)
-
-copy_but.place(
-    x=376.0,
-    y=130.0,
-    width=69.5,
-    height=32.5
-)
-
-console_image = PhotoImage(
-    file=asset("entry_10.png"))
-entry_bg_10 = canvas.create_image(
-    379.0,
-    605.0,
-    image=console_image
-)
-console = Text(
-    bd=0,
-    bg="#FFFFFF",
-    fg="#000716",
-    font=('Arial', 12, 'bold'),
-    highlightthickness=0,
-    state="disabled"
-)
-
-console.place(
-    x=30.0,
-    y=471.5,
-    width=680.0,
-    height=269.0
-)
-
-mouse_listener = mouse.Listener(on_click=on_button_press)
-mouse_listener.start()
-window.resizable(False, False)
-
+mouse.Listener(on_click=on_button_press).start()
+gui = GUI()
 clear_all()
 disable()
-window.mainloop()
+gui.root.mainloop()
