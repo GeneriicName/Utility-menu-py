@@ -1,7 +1,6 @@
 from __future__ import annotations
 import sys
 import tkinter
-
 import pythoncom
 from os import path, unlink, listdir, mkdir, rename, chmod, environ
 from stat import S_IWRITE
@@ -95,7 +94,7 @@ def clear_obj(obj: Text) -> None:
     obj.configure(state="disabled")
 
 
-def tsleep(secs: float) -> None:
+def tsleep(secs: float | int) -> None:
     """"sleeps using thread, and updates the main gui window while the thread has not finished"""
     t = Thread(target=lambda: sleep(secs), daemon=True)
     t.start()
