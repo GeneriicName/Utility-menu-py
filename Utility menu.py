@@ -9,7 +9,7 @@ from winreg import HKEY_CURRENT_USER, HKEY_USERS, KEY_ALL_ACCESS, DeleteKey, Del
 from winreg import OpenKey, QueryInfoKey, EnumKey, ConnectRegistry, HKEY_LOCAL_MACHINE, KEY_SET_VALUE, SetValueEx
 from shutil import rmtree
 from subprocess import run
-from time import sleep, time
+from time import sleep
 from getpass import getuser
 from win32net import NetShareEnum
 from random import random
@@ -27,10 +27,10 @@ import tkinter.messagebox
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, INSERT, messagebox, END, ttk, CENTER, SEL, Event
 
 
-def redirect(output: str) -> None:
+def redirect(*output: str) -> None:
     """redirects all output to the console Text object"""
     gui.console.configure(state="normal")
-    gui.console.insert(END, output)
+    gui.console.insert(END, str(*output).replace(".!text11", ""))
     gui.console.see(END)
     gui.console.configure(state="disabled")
 
@@ -94,15 +94,6 @@ def clear_obj(obj: Text) -> None:
     obj.configure(state="disabled")
 
 
-def tsleep(secs: float | int) -> None:
-    """"sleeps using thread, and updates the main gui window while the thread has not finished"""
-    t = Thread(target=lambda: sleep(secs), daemon=True)
-    t.start()
-    while t.is_alive():
-        refresh()
-        sleep(0.05)
-
-
 def clear_all() -> None:
     """"clears all objects in the gui window, and sets their default text"""
     for obj in [[gui.display_pc, "Current computer: "], [gui.computer_status, "Computer status: "], [gui.console, ""],
@@ -121,23 +112,28 @@ def disable(disable_submit: bool = False) -> None:
     """"disables all the buttons, so they aren't clickable while a function is still executing, also disables submitting
     by pressing the enter key"""
     gui.computer.unbind("<Return>")
-    for obj in (gui.reset_spool, gui.fix_cpt, gui.fix_ie, gui.clear_space, gui.get_printers, gui.delete_ost, 
+    for obj in (gui.reset_spool, gui.fix_cpt, gui.fix_ie, gui.clear_space, gui.get_printers, gui.delete_ost,
                 gui.delete_users, gui.fix_3_lang, gui.copy_but):
         obj.configure(state="disabled", cursor="arrow")
     if disable_submit:
-        gui.submit.configure(state="disabled")
+        gui.submit.configure(state="disabled", cursor="arrow")
+    else:
+        gui.submit.configure(state="normal", cursor="hand2")
+        gui.computer.bind("<Return>", lambda _: run_func(on_submit))
+    if config.current_computer:
+        gui.copy_but.configure(state="normal", cursor="hand2")
     if config.first_time:
         config.first_time = 0
-        gui.computer.bind("<Return>", lambda _: on_submit())
+        gui.computer.bind("<Return>", lambda _: run_func(on_submit))
         gui.submit.configure(cursor="hand2")
 
 
 def enable() -> None:
     """"enables the buttons back, also makes submitted by pressing enter enabled again"""
-    for obj in (gui.reset_spool, gui.fix_cpt, gui.fix_ie, gui.clear_space, gui.get_printers, gui.delete_ost, 
+    for obj in (gui.reset_spool, gui.fix_cpt, gui.fix_ie, gui.clear_space, gui.get_printers, gui.delete_ost,
                 gui.delete_users, gui.fix_3_lang, gui.submit, gui.copy_but):
         obj.configure(state="normal", cursor="hand2")
-    gui.computer.bind("<Return>", lambda _: on_submit())
+    gui.computer.bind("<Return>", lambda _: run_func(on_submit))
     if not config.current_user:
         gui.delete_ost.configure(state="disabled", cursor="arrow")
         gui.fix_cpt.configure(state="disabled", cursor="arrow")
@@ -220,9 +216,9 @@ def create_selection_window(options: list) -> None:
         selected_options = [check.get() for check in option_vars if check.get()]
         canvas_.unbind_all("<MouseWheel>")
         selection_window.destroy()
-        gui.root.focus_set()
+        config.tasks.append(lambda: gui.root.focus_set())
         if not selected_options:
-            print("No users were chosen to be deleted")
+            config.tasks.append(lambda: print("No users were chosen to be deleted"))
             config.yes_no = False
             return
         yes_no = messagebox.askyesno("Warning", f"Are you sure you want to delete the following users?\n"
@@ -231,18 +227,19 @@ def create_selection_window(options: list) -> None:
             config.wll_delete = [selected.split()[-1] for selected in selected_options if selected]
             config.yes_no = True
             return
-        print("Canceled users deletion")
+        config.tasks.append(lambda: print("Canceled users deletion"))
         config.yes_no = False
         return
 
     def disable_main_window(selection_window_: tkinter.Toplevel) -> None:
         """disables the main window and brings the selection box to the front"""
+
         def on_window_close():
             """"deletes the checkbox window and unbind middle mouse wheel from scrolling in the checkbox window"""
-            gui.root.grab_release()
+            config.tasks.append(lambda: gui.root.grab_release())
             selection_window_.destroy()
             canvas_.unbind_all("<MouseWheel>")
-            print("Canceled users deletion")
+            config.tasks.append(lambda: print("Canceled users deletion"))
 
         gui.root.grab_set()
         selection_window.protocol("WM_DELETE_WINDOW", on_window_close)
@@ -290,6 +287,7 @@ def create_selection_window(options: list) -> None:
 
 class ProgressBar:
     """"an easily deployable progressbar which can be called via a with statement"""
+
     def __init__(self, total_items: int, title_: str, end_statement: str = ""):
         """"initial configuration of the progressbar"""
         self.total_items = total_items
@@ -321,7 +319,7 @@ class ProgressBar:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """cleans up after the progress bar finishes"""
-        print(self.end_statement)
+        config.tasks.append(lambda: print(self.end_statement))
         self.progressbar.destroy()
         self.label.destroy()
 
@@ -333,7 +331,6 @@ class ProgressBar:
             progress = (self.current_item / self.total_items) * 100
             ttk.Style().configure('text.Horizontal.TProgressbar', text=f"{int(progress)} %")
             self.progressbar["value"] = progress
-            self.root.update_idletasks()
 
 
 def refresh() -> None:
@@ -347,22 +344,21 @@ def fix_ie_func() -> None:
     compatibility mode"""
     pc = config.current_computer
     if not reg_connect():
-        print_error(gui.console, output="Could not fix internet explorer", newline=True)
-    refresh()
+        config.tasks.append(lambda: print_error(gui.console, output="Could not fix internet explorer", newline=True))
     with ConnectRegistry(pc, HKEY_LOCAL_MACHINE) as reg:
         for key_name in (
                 r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{"
                 r"1FD49718-1D00-4B19-AF5F-070AF6D5D54C}",
                 r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{"
                 r"1FD49718-1D00-4B19-AF5F-070AF6D5D54C"):
-            refresh()
             try:
                 with OpenKey(reg, key_name, 0, KEY_ALL_ACCESS) as key:
                     DeleteKey(key, "")
             except FileNotFoundError:
                 pass
             except:
-                print_error(gui.console, output="Unable to fix internet explorer", newline=True)
+                config.tasks.append(lambda: print_error(gui.console, output="Unable to fix internet explorer",
+                                                        newline=True))
                 log()
                 return
 
@@ -377,16 +373,12 @@ def fix_ie_func() -> None:
     except:
         log()
 
-    update(gui.ie_fixed, "Internet explorer: Fixed")
-    print_success(gui.console, output=f"Fixed internet explorer", newline=True)
+    config.tasks.append(lambda: update(gui.ie_fixed, "Internet explorer: Fixed"))
+    config.tasks.append(lambda: print_success(gui.console, output=f"Fixed internet explorer", newline=True))
 
 
 def fix_cpt_func() -> None:
     """"fixes cockpit printer via deleting the appropriate registry keys"""
-    if not reg_connect():
-        print_error(gui.console, output="ERROR, could not connect to remote registry", newline=True)
-        return
-    refresh()
     with ConnectRegistry(config.current_computer, HKEY_CURRENT_USER) as reg:
         try:
             with OpenKey(reg, r"SOFTWARE\Jetro Platforms\JDsClient\PrintPlugIn", 0, KEY_ALL_ACCESS) as key:
@@ -395,47 +387,46 @@ def fix_cpt_func() -> None:
             pass
         except:
             log()
-            print_error(gui.console, output="Failed to fix cpt printer", newline=True)
+            config.tasks.append(lambda: print_error(gui.console, output="Failed to fix cpt printer", newline=True))
             return
-    print_success(gui.console, output="Fixed cpt printer", newline=True)
-    update(gui.cpt_fixed, "Cockpit printer: Fixed")
+    config.tasks.append(lambda: print_success(gui.console, output="Fixed cpt printer", newline=True))
+    config.tasks.append(lambda: update(gui.cpt_fixed, "Cockpit printer: Fixed"))
 
 
 def fix_3_languages() -> None:
     """fixes 3 languages bug via deleting the appropriate registry keys"""
     if not reg_connect():
-        print_error(gui.console, output="ERROR, could not connect to remote registry", newline=True)
+        config.tasks.append(lambda: print_error(gui.console, output="ERROR, "
+                                                                    "could not connect to remote registry",
+                                                newline=True))
         return
-    refresh()
     with ConnectRegistry(config.current_computer, HKEY_USERS) as reg:
-        refresh()
         try:
             with OpenKey(reg, r".DEFAULT\Keyboard Layout\Preload", 0, KEY_ALL_ACCESS) as key:
                 DeleteKey(key, "")
         except FileNotFoundError:
             pass
         except:
-            print_error(gui.console, output="Failed to fix 3 languages bug", newline=True)
+            config.tasks.append(print_error(lambda: gui.console, output="Failed to fix 3 languages bug", newline=True))
             log()
             return
-    print_success(gui.console, output="Fixed 3 languages bug", newline=True)
+    config.tasks.append(lambda: print_success(gui.console, output="Fixed 3 languages bug", newline=True))
 
 
 def reset_spooler() -> None:
     """resets the print spooler via WMI"""
     try:
         # noinspection PyUnboundLocalVariable
-        refresh()
+        pythoncom.CoInitialize()
         connection = WMI(computer=config.current_computer)
         service = connection.Win32_Service(name="Spooler")
-        refresh()
         service[0].StopService()
-        tsleep(1)
-        refresh()
+        sleep(1)
         service[0].StartService()
-        print_success(gui.console, output=f"Successfully restarted the spooler", newline=True)
+        config.tasks.append(lambda: print_success(gui.console, output=f"Successfully restarted the spooler",
+                                                  newline=True))
     except:
-        print_error(gui.console, output=f"Failed to restart the spooler", newline=True)
+        config.tasks.append(lambda: print_error(gui.console, output=f"Failed to restart the spooler", newline=True))
         log()
 
 
@@ -444,27 +435,27 @@ def delete_the_ost() -> None:
     handles shutting down outlook and skype on the remote computer so the OST could be renamed"""
     user_ = config.current_user
     pc = config.current_computer
+    pythoncom.CoInitialize()
     if not tkinter.messagebox.askyesno(title="OST deletion",
                                        message=f"Are you sure you want to delete "
                                                f"the ost of {user_name_translation(user_)}?"):
-        print_error(gui.console, output="Canceled OST deletion", newline=True)
+        config.tasks.append(lambda: print_error(gui.console, output="Canceled OST deletion", newline=True))
         return
     try:
         host = WMI(computer=pc)
         for procs in ("lync.exe", "outlook.exe", "UcMapi.exe"):
             for proc in host.Win32_Process(name=procs):
-                refresh()
                 if proc:
                     try:
                         proc.Terminate()
                     except:
                         log()
     except:
-        print_error(gui.console, output="Could not connect to the computer", newline=True)
+        config.tasks.append(lambda: print_error(gui.console, output="Could not connect to the computer", newline=True))
         log()
         return
     if not path.exists(fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook"):
-        print_error(gui.console, f"Could not find an OST file", newline=True)
+        config.tasks.append(lambda: print_error(gui.console, f"Could not find an OST file", newline=True))
         return
 
     ost = listdir(fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook")
@@ -472,21 +463,29 @@ def delete_the_ost() -> None:
         if file.endswith("ost"):
             ost = fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook\{file}"
             try:
-                tsleep(1)
+                sleep(1)
                 rename(ost, f"{ost}{random():.3f}.old")
-                print_success(gui.console, output=f"Successfully removed the ost file", newline=True)
+                config.tasks.append(lambda: print_success(gui.console,
+                                                          output=f"Successfully removed the ost file", newline=True))
+                return
             except FileExistsError:
                 try:
                     rename(ost, f"{ost}{random():.3f}.old")
-                    print_success(gui.console, output=f"Successfully removed the ost file", newline=True)
+                    config.tasks.append(lambda: print_success(gui.console,
+                                                              output=f"Successfully removed the ost file",
+                                                              newline=True))
+                    return
                 except:
                     log()
-                    print_error(gui.console, f"Could not Delete the OST file", newline=True)
+                    config.tasks.append(
+                        lambda: print_error(gui.console, f"Could not Delete the OST file", newline=True))
+                    return
             except:
-                print_error(gui.console, f"Could not Delete the OST file", newline=True)
+                config.tasks.append(lambda: print_error(gui.console, f"Could not Delete the OST file", newline=True))
                 log()
+                return
     else:
-        print_error(gui.console, f"Could not find an OST file", newline=True)
+        config.tasks.append(lambda: print_error(gui.console, f"Could not find an OST file", newline=True))
 
 
 def my_rm(file_: str, bar_: callable) -> None:
@@ -519,24 +518,20 @@ def rmtree_recreate(dir_: str, bar_: callable = None) -> None:
 def clear_space_func() -> None:
     """clears spaces from the remote computer, paths, and other configurations as for which files to delete
     can be configured via the config file. using multithreading to delete the files faster"""
-    refresh()
     pc = config.current_computer
     users_dirs = listdir(fr"\\{pc}\c$\users")
-    refresh()
 
     space_init = get_space(pc)
     flag = False
-    refresh()
 
     edb_file = fr"\\{pc}\c$\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb"
     if path.exists(edb_file) and config.delete_edb:
         try:
+            pythoncom.CoInitialize()
             connection = WMI(computer=pc)
             service = connection.Win32_Service(name="WSearch")
-            refresh()
             service[0].StopService()
-            tsleep(0.6)
-            refresh()
+            sleep(0.6)
             unlink(fr"\\{pc}\c$\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb")
             service[0].StartService()
             flag = True
@@ -549,17 +544,13 @@ def clear_space_func() -> None:
         for path_msg in config.c_paths_with_msg:
             if len(path_msg[0]) < 3:
                 continue
-            refresh()
             if path.exists(fr"\\{pc}\c$\{path_msg[0]}"):
-                refresh()
                 files = [fr"\\{pc}\c$\{path_msg[0]}\{file}" for file in listdir(fr"\\{pc}\c$\{path_msg[0]}")]
-                refresh()
                 with ProgressBar(len(files), path_msg[1], path_msg[-1]) as bar:
-                    with ThreadPoolExecutor(max_workers=8) as executor:
+                    with ThreadPoolExecutor(max_workers=config.mx_w) as executor:
                         jobs = [executor.submit(my_rm, file, bar) for file in files]
                         while not all([result.done() for result in jobs]):
                             sleep(0.1)
-                            gui.root.update()
 
     if config.delete_user_temp:
         with ProgressBar(len(users_dirs), f"Deleting temps of {len(users_dirs)} users",
@@ -567,11 +558,10 @@ def clear_space_func() -> None:
             dirs = [fr"\\{pc}\c$\users\{dir_}\AppData\Local\Temp" for dir_ in users_dirs if
                     (dir_.lower().strip() != config.user.lower().strip() and config.current_computer.lower()
                      != config.host.lower().strip())]
-            with ThreadPoolExecutor(max_workers=8) as executor:
+            with ThreadPoolExecutor(max_workers=config.mx_w) as executor:
                 jobs = [executor.submit(my_rm, dir_, bar) for dir_ in dirs]
                 while not all([result.done() for result in jobs]):
                     sleep(0.1)
-                    gui.root.update()
 
     if config.u_paths_with_msg:
         for path_msg in config.u_paths_with_msg:
@@ -580,16 +570,12 @@ def clear_space_func() -> None:
             msg_ = path_msg[1].replace("users_amount", str(len(users_dirs)))
             with ProgressBar(len(users_dirs), msg_, path_msg[-1].replace(str(len(users_dirs)))) as bar:
                 for user in users_dirs:
-                    refresh()
                     if path.exists(fr"\\{pc}\c$\users\{user}\{path_msg[0]}"):
-                        refresh()
                         files = listdir(fr"\\{pc}\c$\users\{user}\{path_msg[0]}")
-                        refresh()
-                        with ThreadPoolExecutor(max_workers=8) as executor:
+                        with ThreadPoolExecutor(max_workers=config.mx_w) as executor:
                             jobs = [executor.submit(my_rm, file) for file in files]
                             while not all([result.done() for result in jobs]):
                                 sleep(0.1)
-                                gui.root.update()
                     bar()
 
     if config.u_paths_without_msg or config.c_paths_without_msg:
@@ -598,41 +584,33 @@ def clear_space_func() -> None:
             for path_msg in config.c_paths_without_msg:
                 if len(path_msg[0]) < 3:
                     continue
-                refresh()
                 if path.exists(fr"\\{pc}\c$\{path_msg[0]}"):
-                    refresh()
                     files = listdir(fr"\\{pc}\c$\{path_msg[0]}")
-                    refresh()
-                    with ThreadPoolExecutor(max_workers=8) as executor:
+                    with ThreadPoolExecutor(max_workers=config.mx_w) as executor:
                         jobs = [executor.submit(my_rm, file) for file in files]
                         while not all([result.done() for result in jobs]):
                             sleep(0.1)
-                            gui.root.update()
                 bar()
 
             for path_msg in config.u_paths_without_msg:
                 if len(path_msg[0]) < 3:
                     continue
                 for user in users_dirs:
-                    refresh()
                     if path.exists(fr"\\{pc}\c$\users\{user}\{path_msg[0]}"):
-                        refresh()
                         files = listdir(fr"\\{pc}\c$\users\{user}\{path_msg[0]}")
-                        refresh()
-                        with ThreadPoolExecutor(max_workers=8) as executor:
+                        with ThreadPoolExecutor(max_workers=config.mx_w) as executor:
                             jobs = [executor.submit(my_rm, file) for file in files]
                             while not all([result.done() for result in jobs]):
                                 sleep(0.1)
-                                gui.root.update()
                 bar()
 
     if not flag and config.delete_edb and path.exists(edb_file):
         try:
+            pythoncom.CoInitialize()
             connection = WMI(computer=pc)
             service = connection.Win32_Service(name="WSearch")
-            refresh()
             service[0].StopService()
-            tsleep(0.8)
+            sleep(0.8)
             unlink(fr"\\{pc}\c$\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb")
             service[0].StartService()
             flag = True
@@ -641,21 +619,26 @@ def clear_space_func() -> None:
         except:
             log()
     if flag and config.delete_edb:
-        print(fr"Deleted the search.edb file")
+        config.tasks.append(lambda: print(fr"Deleted the search.edb file"))
     else:
         if config.delete_edb:
             print_error(gui.console, output="Failed to remove search.edb file", newline=True)
     space_final = get_space(pc)
-    print_success(gui.console, output=f"Cleared {abs((space_final - space_init)):.1f} GB from the disk", newline=True)
+    config.tasks.append(lambda: print_success(gui.console,
+                                              output=f"Cleared {abs((space_final - space_init)):.1f} GB from the disk",
+                                              newline=True))
     try:
         space = get_space(pc)
         if space <= 5:
-            update_error(gui.space_c, "Space in C disk: ", f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+            config.tasks.append(lambda: update_error(gui.space_c, "Space in C disk: ",
+                                                     f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB"))
         else:
-            update(gui.space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+            config.tasks.append(lambda: update(gui.space_c,
+                                               f"Space in C disk: {space:.1f}GB free out of "
+                                               f"{get_total_space(pc):.1f}GB"))
     except:
         log()
-        update_error(gui.space_c, "Space in C disk: ", "ERROR")
+        config.tasks.append(lambda: update_error(gui.space_c, "Space in C disk: ", "ERROR"))
 
 
 def my_rmtree(dir_: str, bar_: callable) -> None:
@@ -669,43 +652,44 @@ def del_users() -> None:
     """gives you the option to choose which users folders to delete as well as multithreading deletion of folders
     will exclude the current user of the remote pc if found one.
     users to exclude could be configured in the config file"""
+    pythoncom.CoInitialize()
     config.wll_delete = []
     config.yes_no = False
     pc = config.current_computer
     users_to_choose_delete = []
     for dir_ in listdir(fr"\\{pc}\c$\Users"):
-        if dir_.lower() == config.current_user.lower() or dir_.lower() in config.exclude or \
+        if dir_.lower() == str(config.current_user).lower() or dir_.lower() in config.exclude or \
                 any([dir_.lower().startswith(exc_lude) for exc_lude in config.startwith_exclude]) \
                 or not path.isdir(fr"\\{pc}\c$\users\{dir_}"):
             continue
         users_to_choose_delete.append([user_name_translation(dir_), dir_])
     if not users_to_choose_delete:
-        print("No users were found to delete")
+        config.tasks.append(lambda: print("No users were found to delete"))
         return
     create_selection_window(users_to_choose_delete)
     if not config.yes_no:
         return
-    refresh()
     space_init = get_space(pc)
     with ProgressBar(len(config.wll_delete), f"Deleting {len(config.wll_delete)} folders",
                      f"Deleted {len(config.wll_delete)} users") as bar:
         config.wll_delete = [fr"\\{pc}\c$\users\{dir_}" for dir_ in config.wll_delete]
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=config.mx_w) as executor:
             jobs = [executor.submit(my_rmtree, dir_, bar) for dir_ in config.wll_delete]
             while not all([result.done() for result in jobs]):
                 sleep(0.1)
-                gui.root.update()
     space_final = get_space(pc)
-    print(f"Cleared {abs((space_final - space_init)):.1f} GB from the disk")
+    config.tasks.append(lambda: print(f"Cleared {abs((space_final - space_init)):.1f} GB from the disk"))
     try:
         space = get_space(pc)
         if space <= 5:
-            update_error(gui.space_c, "Space in C disk: ", f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+            config.tasks.append(lambda: update_error(gui.space_c, "Space in C disk: ",
+                                                     f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB"))
         else:
-            update(gui.space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+            config.tasks.append(lambda: update(gui.space_c, f"Space in C disk: "
+                                                            f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB"))
     except:
         log()
-        update_error(gui.space_c, "Space in C disk: ", "ERROR")
+        config.tasks.append(lambda: update_error(gui.space_c, "Space in C disk: ", "ERROR"))
 
 
 def get_printers_func() -> None:
@@ -715,7 +699,6 @@ def get_printers_func() -> None:
     pc = config.current_computer
     if not reg_connect():
         return
-    refresh()
     with ConnectRegistry(pc, HKEY_USERS) as reg:
         users_dict = {}
         sid_list = []
@@ -728,11 +711,10 @@ def get_printers_func() -> None:
                     pass
                 except:
                     log()
-        refresh()
 
         with ConnectRegistry(pc, HKEY_LOCAL_MACHINE) as users_path:
+            pythoncom.CoInitialize()
             for sid in set(sid_list):
-                refresh()
                 try:
                     with OpenKey(users_path,
                                  fr"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}") as profiles:
@@ -742,7 +724,6 @@ def get_printers_func() -> None:
                             users_dict[sid] = user_name_translation(username)
                 except:
                     log()
-        refresh()
 
         flag = False
         for sid in sid_list:
@@ -752,11 +733,11 @@ def get_printers_func() -> None:
                     for i in range(printers_len):
                         try:
                             printer = EnumKey(printer_path, i).replace(",", "\\").strip()
+                            p = f"{printer} was found on user {users_dict[sid]}"
                             if not flag:
-                                print("\n", "-" * 54, "Network printers", "-" * 53)
+                                config.tasks.append(lambda: print("\n", "-" * 54, "Network printers", "-" * 53))
                                 flag = True
-                            print(f"{printer} was found on user {users_dict[sid]}")
-                            refresh()
+                            config.tasks.append(lambda: print(p))
                             found_any = True
                         except:
                             log()
@@ -770,7 +751,6 @@ def get_printers_func() -> None:
             found = []
             printers_len = QueryInfoKey(printers)[0]
             for i in range(printers_len):
-                refresh()
                 with OpenKey(printers, EnumKey(printers, i)) as printer:
                     try:
                         prnt = QueryValueEx(printer, "Port")[0]
@@ -781,12 +761,12 @@ def get_printers_func() -> None:
                         found.append(prnt)
                         int(prnt.split(".")[0])
                         if not flag:
-                            print("\n", "-" * 54, " TCP/IP printers ", "-" * 53)
+                            config.tasks.append(lambda: print("\n", "-" * 54, " TCP/IP printers ", "-" * 53))
                             flag = True
-                        print(f"TCP/IP Printer with an IP of {prnt} is located at {config.ip_printers[prnt.strip()]}" if
-                              prnt in config.ip_printers else
-                              f"Printer with an IP of {prnt} is not on any of the servers")
-                        refresh()
+                        config.tasks.append(lambda: print(
+                            f"TCP/IP Printer with an IP of {prnt} is located at {config.ip_printers[prnt.strip()]}" if
+                            prnt in config.ip_printers else
+                            f"Printer with an IP of {prnt} is not on any of the servers"))
                         found_any = True
                     except (FileNotFoundError, ValueError):
                         pass
@@ -797,7 +777,6 @@ def get_printers_func() -> None:
             found = []
             printers_len = QueryInfoKey(printers)[0]
             for i in range(printers_len):
-                refresh()
                 with OpenKey(printers, EnumKey(printers, i)) as printer:
                     try:
                         prnt = QueryValueEx(printer, "LocationInformation")[0].split("/")[2].split(":")[0]
@@ -807,47 +786,58 @@ def get_printers_func() -> None:
                             prnt = prnt.split("_")[0]
                         found.append(prnt)
                         if not flag:
-                            print("\n", "-" * 55, " WSD printers ", "-" * 55)
+                            config.tasks.append(lambda: print("\n", "-" * 55, " WSD printers ", "-" * 55))
                             flag = True
-                        print(
+                        config.tasks.append(lambda: print(
                             f"WSD printer with an IP of {prnt.strip()} is located at "
                             f"{config.ip_printers[prnt.strip()]}" if prnt.strip() in config.ip_printers else
-                            f"WSD printer with an IP of {prnt} is not on any of the servers")
-                        refresh()
+                            f"WSD printer with an IP of {prnt} is not on any of the servers"))
                         found_any = True
                     except (FileNotFoundError, ValueError, IndexError):
                         pass
                     except:
                         log()
     if not found_any:
-        print_error(gui.console, output=f"No printers were found", newline=True)
+        config.tasks.append(lambda: print_error(gui.console, output=f"No printers were found", newline=True))
 
 
-def run_func(func: callable) -> None:
+def run_it(func: callable, tries: int = 1) -> None:
     """passes the function to run_it after the main window is idle, and gives the button time to be unpressed
     as well as disabling the buttons"""
-    disable(disable_submit=True)
-    gui.root.after("idle", lambda: run_it(func))
-
-
-def run_it(func: callable) -> None:
-    """runs the function itself, catch any exception and logs it, checks if the issue is a network issue via running
-    on_submit when an exception is caught"""
-    refresh()
-    if not reg_connect():
-        on_submit()
+    if tries == 4:
+        run_func(on_submit)
         return
-    refresh()
-    if not wmi_connectable():
-        on_submit()
-        return
-    refresh()
     try:
         func()
-        enable()
     except:
         log()
-        on_submit(pc=config.current_computer)
+        config.tasks.append(lambda: print(gui.console, f"An error occurred, retrying for {tries} out of 3"))
+        run_func(func, tries+1)
+
+
+def run_func(func: callable, tries: int = 1) -> None:
+    """runs the function itself, catch any exception and logs it, checks if the issue is a network issue via running
+    on_submit when an exception is caught"""
+    disable(disable_submit=True)
+    config.disable = False
+    refresh()
+    if not func == on_submit:
+        if not reg_connect():
+            run_func(on_submit, tries)
+            return
+        refresh()
+        if not wmi_connectable():
+            run_func(on_submit, tries)
+            return
+    refresh()
+    t = Thread(target=lambda: run_it(func, tries), daemon=True)
+    t.start()
+    while t.is_alive() or config.tasks:
+        refresh()
+        if config.tasks:
+            config.tasks.pop(0)()
+        sleep(0.03)
+    disable() if config.disable else enable()
 
 
 def update_user(user_: str) -> None:
@@ -877,52 +867,53 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
     name and rerun on_submit with the computer as the arg
     if the string is neither a username nor a computer name it checks if it's a printer - TCP/IP or installed via
     print server"""
-    refresh()
     clear_all()
     if not pc:
         pc = gui.computer.get().strip()
     if not pc:
-        disable()
-        gui.computer.bind("<Return>", lambda _: on_submit())
+        config.tasks.append(lambda: gui.computer.bind("<Return>", lambda _: run_func(on_submit)))
+        config.disable = True
         return
-    disable(disable_submit=True)
-    refresh()
+    config.tasks.append(lambda: disable(disable_submit=True))
+    pythoncom.CoInitialize()
     if pc_in_domain(pc):
-        gui.copy_but.configure(state="normal")
-        copy_clip(pc)
+        config.tasks.append(lambda: gui.copy_but.configure(state="normal", cursor="hand2"))
+        config.tasks.append(lambda: copy_clip(pc))
         config.current_computer = pc
-        update(gui.display_pc, f"Current computer: {pc}")
-        refresh()
+        config.tasks.append(lambda: update(gui.display_pc, f"Current computer: {pc}"))
         if not check_pc_active(pc):
-            print_error(gui.computer_status, "OFFLINE", "Computer status: ", clear_=True)
-            gui.submit.configure(state="normal")
-            gui.computer.bind("<Return>", lambda _: on_submit())
+            config.tasks.append(lambda: print_error(gui.computer_status, "OFFLINE", "Computer status: ", clear_=True))
+            config.tasks.append(lambda: gui.submit.configure(state="normal"))
+            config.tasks.append(lambda: gui.computer.bind("<Return>", lambda _: run_func(on_submit)))
+            config.disable = True
             if passed_user:
-                update_user(passed_user)
+                config.tasks.append(lambda: update_user(passed_user))
             return
         if not wmi_connectable():
-            print_error(gui.console, output="Could not connect to computer's WMI", newline=True)
-            gui.submit.configure(state="normal")
-            gui.computer.bind("<Return>", lambda _: on_submit())
+            config.tasks.append(lambda: print_error(gui.console,
+                                                    output="Could not connect to computer's WMI", newline=True))
+            config.tasks.append(lambda: gui.submit.configure(state="normal"))
+            config.tasks.append(lambda: gui.computer.bind("<Return>", lambda _: run_func(on_submit)))
+            config.disable = True
             return
         if not reg_connect():
-            print_error(gui.console, output="Could not connect to computer's registry", newline=True)
-            gui.submit.configure(state="normal")
-            gui.computer.bind("<Return>", lambda _: on_submit())
+            config.tasks.append(lambda: print_error(gui.console, output="Could not connect to computer's registry",
+                                                    newline=True))
+            config.tasks.append(lambda: gui.submit.configure(state="normal"))
+            config.tasks.append(lambda: gui.computer.bind("<Return>", lambda _: run_func(on_submit)))
+            config.disable = True
             return
 
-        print_success(gui.computer_status, "ONLINE", "Computer status: ", clear_=True)
-        refresh()
+        config.tasks.append(lambda: print_success(gui.computer_status, "ONLINE", "Computer status: ", clear_=True))
         user_ = get_username(pc)
         if user_:
             config.current_user = user_
             if not passed_user or passed_user.lower() == user_.lower():
-                update(gui.display_user, f"Current user: {user_name_translation(user_)}")
+                config.tasks.append(lambda: update(gui.display_user, f"Current user: {user_name_translation(user_)}"))
             else:
-                update_error(gui.display_user, "Current user: ", user_)
+                config.tasks.append(lambda: update_error(gui.display_user, "Current user: ", user_))
         else:
-            update_error(gui.display_user, "Current user: ", "No user")
-        refresh()
+            config.tasks.append(lambda: update_error(gui.display_user, "Current user: ", "No user"))
         try:
             r_pc = WMI(pc)
             for k in r_pc.Win32_OperatingSystem():
@@ -930,41 +921,41 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
                 current_time = datetime.strptime(k.LocalDateTime.split('.')[0], '%Y%m%d%H%M%S')
                 uptime_ = current_time - last_boot_time
                 if uptime_ > timedelta(days=7):
-                    update_error(gui.uptime, "Uptime: ", uptime_)
+                    config.tasks.append(lambda: update_error(gui.uptime, "Uptime: ", uptime_))
                 else:
-                    update(gui.uptime, f"Uptime: {uptime_}")
+                    config.tasks.append(lambda: update(gui.uptime, f"Uptime: {uptime_}"))
                 break
         except:
-            update_error(gui.uptime, "Uptime: ", "ERROR")
+            config.tasks.append(lambda: update_error(gui.uptime, "Uptime: ", "ERROR"))
             log()
-        refresh()
 
         try:
             space = get_space(pc)
             if space <= 5:
-                update_error(gui.space_c, "Space in C disk: ", f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+                config.tasks.append(lambda: update_error(gui.space_c, "Space in C disk: ",
+                                                         f"{space:.1f}GB free out of {get_total_space(pc):.1f}GB"))
             else:
-                update(gui.space_c, f"Space in C disk: {space:.1f}GB free out of {get_total_space(pc):.1f}GB")
+                config.tasks.append(lambda: update(gui.space_c, f"Space in C disk: {space:.1f}GB free"
+                                                                f" out of {get_total_space(pc):.1f}GB"))
         except:
             log()
-            update_error(gui.space_c, "Space in C disk: ", "ERROR")
-        refresh()
+            config.tasks.append(lambda: update_error(gui.space_c, "Space in C disk: ", "ERROR"))
 
         if path.exists(fr"\\{pc}\d$"):
             try:
                 space = get_space(pc, disk="d")
                 if space <= 5:
-                    update_error(gui.space_d, "Space in D disk: ", f"{space:.1f}GB free out of "
-                                                                   f"{get_total_space(pc, disk='d'):.1f}GB")
+                    config.tasks.append(lambda: update_error(
+                        gui.space_d, "Space in D disk: ", f"{space:.1f}GB free out of "
+                                                          f"{get_total_space(pc, disk='d'):.1f}GB"))
                 else:
-                    update(gui.space_d, f"Space in D disk: {space:.1f}GB free out of "
-                                        f"{get_total_space(pc, disk='d'):.1f}GB")
+                    config.tasks.append(lambda: update(gui.space_d, f"Space in D disk: {space:.1f}GB free out of "
+                                                                    f"{get_total_space(pc, disk='d'):.1f}GB"))
             except:
                 log()
-                update_error(gui.space_d, "Space in D disk: ", "ERROR")
+                config.tasks.append(lambda: update_error(gui.space_d, "Space in D disk: ", "ERROR"))
         else:
-            update_error(gui.space_d, "Space in D disk: ", "Does not exist")
-        refresh()
+            config.tasks.append(lambda: update_error(gui.space_d, "Space in D disk: ", "Does not exist"))
 
         try:
             try:
@@ -974,69 +965,64 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
             for ram_ in r_pc.Win32_ComputerSystem():
                 total_ram = int(ram_.TotalPhysicalMemory) / (1024 ** 3)
                 if total_ram < 7:
-                    update_error(gui.ram, "Total RAM: ", f"{round(total_ram)}GB")
+                    config.tasks.append(lambda: update_error(gui.ram, "Total RAM: ", f"{round(total_ram)}GB"))
                 else:
-                    update(gui.ram, f"Total RAM: {round(total_ram)}GB")
+                    config.tasks.append(lambda: update(gui.ram, f"Total RAM: {round(total_ram)}GB"))
         except:
-            update_error(gui.ram, "Total RAM: ", "ERROR")
+            config.tasks.append(lambda: update_error(gui.ram, "Total RAM: ", "ERROR"))
             log()
-        refresh()
 
         if is_ie_fixed(pc):
-            update(gui.ie_fixed, "Internet explorer: Fixed")
+            config.tasks.append(lambda: update(gui.ie_fixed, "Internet explorer: Fixed"))
         else:
-            update_error(gui.ie_fixed, "Internet explorer: ", "Not fixed")
-        refresh()
+            config.tasks.append(lambda: update_error(gui.ie_fixed, "Internet explorer: ", "Not fixed"))
 
         if is_cpt_fixed(pc):
-            update(gui.cpt_fixed, "Cockpit printer: Fixed")
+            config.tasks.append(lambda: update(gui.cpt_fixed, "Cockpit printer: Fixed"))
         else:
-            update_error(gui.cpt_fixed, "Cockpit printer", "Not fixed")
-        refresh()
+            config.tasks.append(lambda: update_error(gui.cpt_fixed, "Cockpit printer", "Not fixed"))
 
         if user_ or passed_user:
             if passed_user:
                 user_ = passed_user
-            update_user(user_)
+            config.tasks.append(lambda: update_user(user_))
         else:
-            update_error(gui.user_active, "User status: ", "No user")
-        refresh()
-        enable()
+            config.tasks.append(lambda: update_error(gui.user_active, "User status: ", "No user"))
+        config.tasks.append(lambda: enable())
 
     else:
-        refresh()
+        config.disable = True
         try:
             with open(f"{config.users_txt}\\{pc}.txt") as pc_file:
-                refresh()
                 user_ = pc
                 pc = pc_file.read().strip()
                 on_submit(pc=pc, passed_user=user_)
         except FileNotFoundError:
-            refresh()
             if user_exists(pc):
-                refresh()
-                print_error(gui.console, f"Could not locate the current or last computer {pc} has logged on to")
-                update_user(pc)
+                config.tasks.append(lambda: print_error(gui.console, f"Could not locate the current or last "
+                                                                     f"computer {pc} has logged on to"))
+                config.tasks.append(lambda: update_user(pc))
             else:
-                refresh()
                 if any([pc.lower() in config.ip_printers, pc.lower() in config.svr_printers]):
                     pc = pc.lower()
                     if pc in config.ip_printers:
-                        print(f"Printer with an IP of {pc} is at {config.ip_printers[pc]}")
+                        config.tasks.append(lambda: print(f"Printer with an IP of {pc} is at {config.ip_printers[pc]}"))
                         pc = config.ip_printers[pc]
                     elif pc in config.svr_printers:
-                        print(f"Printer {pc} has an ip of {config.svr_printers[pc]}")
+                        config.tasks.append(lambda: print(f"Printer {pc} has an ip of {config.svr_printers[pc]}"))
                         pc = config.svr_printers[pc]
-                    copy_clip(pc)
+                    config.tasks.append(lambda: copy_clip(pc))
                 else:
                     if r"\\" in pc:
-                        print_error(gui.console, f"Could not locate printer {pc}")
+                        config.tasks.append(lambda: print_error(gui.console, f"Could not locate printer {pc}"))
                     elif pc.count(".") > 2:
-                        print_error(gui.console, f"Could not locate TCP/IP printer with ip of {pc}")
+                        config.tasks.append(lambda: print_error(gui.console,
+                                                                f"Could not locate TCP/IP printer with ip of {pc}"))
                     else:
-                        print_error(gui.console, f"No such user or computer in the domain {pc}")
-            gui.submit.configure(state="normal", cursor="hand2")
-            gui.computer.bind("<Return>", lambda _: on_submit())
+                        config.tasks.append(lambda:
+                                            print_error(gui.console, f"No such user or computer in the domain {pc}"))
+            config.tasks.append(lambda: gui.submit.configure(state="normal", cursor="hand2"))
+            config.tasks.append(lambda: gui.computer.bind("<Return>", lambda _: run_func(on_submit)))
             return
 
 
@@ -1045,6 +1031,7 @@ sys.stdout.write = redirect
 
 class SetConfig:
     """"sets the basic config for the script to run on, these configs are needed in order for the script to run"""
+
     def __init__(self, json_config_file: dict) -> None:
         self.config_file = json_config_file
         self.ip_printers = {}
@@ -1074,6 +1061,7 @@ class SetConfig:
         self.u_paths_without_msg = [path_without_msg for path_without_msg in self.config_file["user_specific_delete"] if
                                     len(path_without_msg) == 1]
         self.users_txt = self.config_file["users txt"]
+        self.mx_w = self.config_file["max_workers"]
         self.current_computer = None
         self.current_user = None
         self.exclude = self.config_file["do_not_delete"]
@@ -1085,6 +1073,9 @@ class SetConfig:
         self.reg_connectable = False
         self.assets = self.config_file["assets"].replace("/", "\\")
         self.title = self.config_file["title"]
+        self.tasks = []
+        self.disable = False
+        self.first_time = 1
 
 
 try:
@@ -1126,6 +1117,7 @@ class TimeoutException(Exception):
 
 def Timeout(timeout: int | float) -> bool | TimeoutException | callable:
     """"run a function with timeout limit via threading"""
+
     def deco(func: callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -1140,10 +1132,6 @@ def Timeout(timeout: int | float) -> bool | TimeoutException | callable:
             t = Thread(target=newFunc, daemon=True)
             try:
                 t.start()
-                start = time()
-                while time() - start < 4.5 and t.is_alive():
-                    refresh()
-                    sleep(0.1)
                 t.join(timeout)
             except TimeoutError:
                 raise TimeoutException('Timeout occurred!')
@@ -1243,7 +1231,6 @@ def query_user(username_: str) -> int:
         if user_account_control & 2 == 2:
             return 1
 
-        refresh()
         dom_info = run(f'net user {username_} /domain | findstr /i "Account expires"', shell=True,
                        capture_output=True, text=True).stdout.strip().split()
         exp = " ".join(dom_info)
@@ -1253,13 +1240,9 @@ def query_user(username_: str) -> int:
             if date_is_older(expires):
                 return 3
 
-        refresh()
-
         if "Locked" in run(f'net user {username_} /domain | findstr /i "Account active"', shell=True,
                            capture_output=True, text=True).stdout.strip():
             return 2
-
-        refresh()
 
         pass_expired = exp.split("Password expires")[1].strip()
         pass_expired = f"{pass_expired[:10]} {pass_expired[11:19]}"
@@ -1419,9 +1402,6 @@ def is_cpt_fixed(pc: str) -> bool:
     return False
 
 
-config.first_time = 1
-
-
 class GUI:
     def __init__(self):
         self.root = Tk()
@@ -1440,7 +1420,7 @@ class GUI:
         )
         self.canvas.place(x=0, y=0)
         self.generic_image = PhotoImage(file=asset("generic_text.png"))
-        self.user_active_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             422.5,
             image=self.generic_image
@@ -1460,7 +1440,7 @@ class GUI:
             width=410.0,
             height=21.2
         )
-        self.cpt_fixed_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             392.0,
             image=self.generic_image
@@ -1480,7 +1460,7 @@ class GUI:
             height=21.2
         )
         self.cpt_fixed.bind("<<Selection>>", lambda event_: ignore_selection(self.cpt_fixed, event_))
-        self.ie_fixed_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             361.5,
             image=self.generic_image
@@ -1500,18 +1480,10 @@ class GUI:
             width=410.0,
             height=21.2
         )
-        self.ram_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             330.5,
             image=self.generic_image
-        )
-        self.ram = Text(
-            bd=0,
-            bg="#D9D9D9",
-            fg="#000716",
-            highlightthickness=0,
-            font=('Arial', 12, 'bold'),
-            cursor="arrow"
         )
         self.ram = Text(
             bd=0,
@@ -1528,7 +1500,7 @@ class GUI:
             width=410.0,
             height=21.4
         )
-        self.space_d_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             299.5,
             image=self.generic_image
@@ -1548,7 +1520,7 @@ class GUI:
             width=410.0,
             height=21.2
         )
-        self.space_c_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             268.5,
             image=self.generic_image
@@ -1568,12 +1540,12 @@ class GUI:
             width=410.0,
             height=21.2
         )
-        self.uptime_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             237.5,
             image=self.generic_image
         )
-        self.uptime_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             237.5,
             image=self.generic_image
@@ -1593,7 +1565,7 @@ class GUI:
             width=410.0,
             height=21.2
         )
-        self.display_user_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             206.5,
             image=self.generic_image
@@ -1613,7 +1585,7 @@ class GUI:
             width=410.0,
             height=21.2
         )
-        self.computer_status_bg = self.canvas.create_image(
+        self.canvas.create_image(
             236.0,
             175.5,
             image=self.generic_image
@@ -1771,7 +1743,7 @@ class GUI:
         )
         self.computer_image = PhotoImage(
             file=asset("entry_8.png"))
-        self.computer_background = self.canvas.create_image(
+        self.canvas.create_image(
             377.5,
             27.0,
             image=self.computer_image
@@ -1788,7 +1760,7 @@ class GUI:
         self.computer.bind("<FocusOut>", hide_text)
         self.computer.bind_all("<Key>", enable_paste, "+")
         self.computer.insert(INSERT, "Computer or User")
-        self.computer.bind("<Return>", lambda _: on_submit())
+        self.computer.bind("<Return>", lambda _: run_func(on_submit))
         self.computer.place(
             x=216.0,
             y=6.0,
@@ -1803,7 +1775,7 @@ class GUI:
             background="#545664",
             borderwidth=0,
             highlightthickness=0,
-            command=on_submit,
+            command=lambda: run_func(on_submit),
             relief="flat"
         )
         self.submit.place(
@@ -1814,7 +1786,7 @@ class GUI:
         )
         self.display_pc_image = PhotoImage(
             file=asset("display_pc.png"))
-        self.display_pc_bg = self.canvas.create_image(
+        self.canvas.create_image(
             195.0,
             142.5,
             image=self.display_pc_image
@@ -1853,7 +1825,7 @@ class GUI:
         )
         self.console_image = PhotoImage(
             file=asset("entry_10.png"))
-        self.entry_bg_10 = self.canvas.create_image(
+        self.canvas.create_image(
             379.0,
             605.0,
             image=self.console_image
