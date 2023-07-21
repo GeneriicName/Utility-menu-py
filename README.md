@@ -20,6 +20,7 @@ This is an example of the config file which is included with the directory.
 | "log"   | "\\\\path\\to\\logfile.log"     | this is the path to the logfile if false, it wont log errors    |
 | "domain"     | "DC=example,DC=domain,DC=com"       | set your domain with ldap      |
 | "print_servers"   | ["\\\\print_svr01", "\\\\print_svr02", "\\\\print_svr03"]     | path to your print servers, list them with network path and double backslashes    |
+| "max_workers"     | 8       | the max threads for the program to use when deleting files, notice that the program it self uses 2 threads so take it into account      |
 | "to_delete"     | [["windows\\ccmcache", "Deleting ccsm cashe", "Deleted ccsm cashe"], ["temp"], ["Windows\\Temp", "Deleting windows temp files", "Deleted windows temp files"]]       | paths to extra None user specific folders to delete their contents, and optional prompt, leave out the \\\\computername\\c$\\      |
 | "user_specific_delete"   | []     | paths to user specific folders to delete, and optional prompt, leave out the \\\\computername\\c$\\user, in the prompt you can use users_amount to insert the amount of users    |
 | "delete_user_temp"     | true       | delete temp files of each user? set true to if so      |
@@ -29,7 +30,7 @@ This is an example of the config file which is included with the directory.
 | "users_txt"     | "\\\\path\\to\\folder\\with\\user.txt files"     | path of folder which contains computer names in usename.txt files      |
 | "assets"     | "\\path\to\directory"       | path to assets such as images      |
 | "title"     | "hello world!"       | give a title to your GUI window      |
-| "max_workers"     | 8       | the max threads for the program to use when deleting files, notice that the program it self uses 2 threads so take it into account      |
+
 
 
 **To use this script with usernames as well as hostnames, you will need a user.txt file containing the computer name from which the last user has logged on for each user. You can easily achieve this with a simple batch logon script/GPO/task, and the location to which the files are dumped needs to be configured in the config.json file.**
