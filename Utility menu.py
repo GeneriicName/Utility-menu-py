@@ -343,8 +343,6 @@ def fix_ie_func() -> None:
     """fixes the Internet Explorer application via deleting appropriate registry keys, as well as disabling
     compatibility mode"""
     pc = config.current_computer
-    if not reg_connect():
-        config.tasks.append(lambda: print_error(gui.console, output="Could not fix internet explorer", newline=True))
     with ConnectRegistry(pc, HKEY_LOCAL_MACHINE) as reg:
         for key_name in (
                 r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{"
@@ -395,11 +393,6 @@ def fix_cpt_func() -> None:
 
 def fix_3_languages() -> None:
     """fixes 3 languages bug via deleting the appropriate registry keys"""
-    if not reg_connect():
-        config.tasks.append(lambda: print_error(gui.console, output="ERROR, "
-                                                                    "could not connect to remote registry",
-                                                newline=True))
-        return
     with ConnectRegistry(config.current_computer, HKEY_USERS) as reg:
         try:
             with OpenKey(reg, r".DEFAULT\Keyboard Layout\Preload", 0, KEY_ALL_ACCESS) as key:
@@ -441,19 +434,14 @@ def delete_the_ost() -> None:
                                                f"the ost of {user_name_translation(user_)}?"):
         config.tasks.append(lambda: print_error(gui.console, output="Canceled OST deletion", newline=True))
         return
-    try:
-        host = WMI(computer=pc)
-        for procs in ("lync.exe", "outlook.exe", "UcMapi.exe"):
-            for proc in host.Win32_Process(name=procs):
-                if proc:
-                    try:
-                        proc.Terminate()
-                    except:
-                        log()
-    except:
-        config.tasks.append(lambda: print_error(gui.console, output="Could not connect to the computer", newline=True))
-        log()
-        return
+    host = WMI(computer=pc)
+    for procs in ("lync.exe", "outlook.exe", "UcMapi.exe"):
+        for proc in host.Win32_Process(name=procs):
+            if proc:
+                try:
+                    proc.Terminate()
+                except:
+                    log()
     if not path.exists(fr"\\{pc}\c$\Users\{user_}\AppData\Local\Microsoft\Outlook"):
         config.tasks.append(lambda: print_error(gui.console, f"Could not find an OST file", newline=True))
         return
@@ -697,8 +685,6 @@ def get_printers_func() -> None:
      achieves that via querying the appropriate registry keys"""
     found_any = False
     pc = config.current_computer
-    if not reg_connect():
-        return
     with ConnectRegistry(pc, HKEY_USERS) as reg:
         users_dict = {}
         sid_list = []
@@ -801,21 +787,25 @@ def get_printers_func() -> None:
         config.tasks.append(lambda: print_error(gui.console, output=f"No printers were found", newline=True))
 
 
-def run_it(func: callable, tries: int = 1) -> None:
+def run_it(func: callable, tries: int = 0) -> None:
     """passes the function to run_it after the main window is idle, and gives the button time to be unpressed
     as well as disabling the buttons"""
-    if tries == 4:
-        run_func(on_submit)
-        return
     try:
         func()
     except:
         log()
-        config.tasks.append(lambda: print(gui.console, f"An error occurred, retrying for {tries} out of 3"))
-        run_func(func, tries+1)
+        if not tries:
+            config.tasks.append(
+                lambda: gui.root.after(60, lambda: run_func(lambda: on_submit(pc=config.current_computer), tries=1))
+            )
+            config.tasks.append(
+                lambda: gui.root.after(
+                    100, lambda: print_error(gui.console, "An error occurred during the execution of the last function")
+                )
+            )
 
 
-def run_func(func: callable, tries: int = 1) -> None:
+def run_func(func: callable, tries: int = 0) -> None:
     """runs the function itself, catch any exception and logs it, checks if the issue is a network issue via running
     on_submit when an exception is caught"""
     disable(disable_submit=True)
