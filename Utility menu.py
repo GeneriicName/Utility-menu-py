@@ -1247,7 +1247,7 @@ def check_pc_active_actual(pc: str) -> bool:
     return path.exists(fr"\\{pc}\c$")
 
 
-def check_pc_active(pc=None):
+def check_pc_active(pc: str = None) -> bool:
     """"timed out check if the computer is online and reachable"""
     # noinspection PyCallingNonCallable
     x = Timeout(timeout=3)(check_pc_active_actual)
