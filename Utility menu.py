@@ -1,6 +1,5 @@
 from __future__ import annotations
 import sys
-import tkinter
 import pythoncom
 from os import path, unlink, listdir, mkdir, rename, chmod, environ
 from stat import S_IWRITE
@@ -23,7 +22,7 @@ from pynput import mouse
 from concurrent.futures import ThreadPoolExecutor
 from psutil import disk_usage
 from pyad import adquery
-import tkinter.messagebox
+import tkinter
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, INSERT, messagebox, END, ttk, CENTER, SEL, Event
 
 
@@ -508,6 +507,7 @@ def clear_space_func() -> None:
     can be configured via the config file. using multithreading to delete the files faster"""
     pc = config.current_computer
     users_dirs = listdir(fr"\\{pc}\c$\users")
+    pythoncom.CoInitialize()
 
     space_init = get_space(pc)
     flag = False
@@ -515,7 +515,6 @@ def clear_space_func() -> None:
     edb_file = fr"\\{pc}\c$\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb"
     if path.exists(edb_file) and config.delete_edb:
         try:
-            pythoncom.CoInitialize()
             connection = WMI(computer=pc)
             service = connection.Win32_Service(name="WSearch")
             service[0].StopService()
@@ -594,7 +593,6 @@ def clear_space_func() -> None:
 
     if not flag and config.delete_edb and path.exists(edb_file):
         try:
-            pythoncom.CoInitialize()
             connection = WMI(computer=pc)
             service = connection.Win32_Service(name="WSearch")
             service[0].StopService()
@@ -981,13 +979,13 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
         config.tasks.append(lambda: enable())
 
     else:
-        config.disable = True
         try:
             with open(f"{config.users_txt}\\{pc}.txt") as pc_file:
                 user_ = pc
                 pc = pc_file.read().strip()
                 on_submit(pc=pc, passed_user=user_)
         except FileNotFoundError:
+            config.disable = True
             if user_exists(pc):
                 config.tasks.append(lambda: print_error(gui.console, f"Could not locate the current or last "
                                                                      f"computer {pc} has logged on to"))
