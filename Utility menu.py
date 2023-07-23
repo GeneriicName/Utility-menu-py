@@ -1067,10 +1067,10 @@ class SetConfig:
 
 
 try:
-    with open("\\".join(__file__.split("\\")[:-1]) + "\\config.json", encoding="utf8") as config_file:
+    with open("config.json", encoding="utf8") as config_file:
         config = SetConfig(load(config_file))
 except FileNotFoundError:
-    messagebox.showerror("config file error", "could not find the config file")
+    messagebox.showerror("config file error", "could not find the config.json file")
     sys.exit(0)
 
 if config.log and not path.isfile(config.log):
