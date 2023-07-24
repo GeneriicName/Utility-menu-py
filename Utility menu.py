@@ -706,6 +706,8 @@ def get_printers_func() -> None:
                         if username[0].startswith("C:\\"):
                             username = username[0].split("\\")[-1]
                             users_dict[sid] = user_name_translation(username)
+                except FileNotFoundError:
+                    pass
                 except:
                     log()
 
