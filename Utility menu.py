@@ -791,6 +791,7 @@ def run_it(func: callable, tries: int = 0) -> None:
     """passes the function to run_it after the main window is idle, and gives the button time to be unpressed
     as well as disabling the buttons"""
     try:
+        pythoncom.CoInitialize()
         func()
     except:
         log()
