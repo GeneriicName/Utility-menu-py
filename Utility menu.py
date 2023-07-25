@@ -919,6 +919,7 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
         except:
             config.tasks.append(lambda: update_error(gui.uptime, "Uptime: ", "ERROR"))
             log()
+        sleep(0.1)
 
         try:
             space = get_space(pc)
