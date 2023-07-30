@@ -73,7 +73,7 @@ echo %computername% > "\\server\folder\%username%.txt"
 ***This script features support for logging, although not fully. However, points of the script that are most likely prone to exceptions are covered.***
 
 
-***I didn't split the script into multiple modules as I did not enoguh enough time in my hands to do it.***
+***I didn't split the script into multiple modules as I did not enoguh enough time on my hands to do it.***
 
 ##
 I won't be updating this script any further, but if you need help understanding why I did something in my script or how it works, feel free to ask.
