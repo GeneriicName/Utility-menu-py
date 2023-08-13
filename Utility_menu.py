@@ -217,7 +217,7 @@ def create_selection_window(options: list) -> None:
         selection_window.destroy()
         config.tasks.append(lambda: gui.root.focus_set())
         if not selected_options:
-            config.tasks.append(lambda: print("No users were chosen to be deleted"))
+            config.tasks.append("No users were chosen to be deleted")
             config.yes_no = False
             return
         yes_no = messagebox.askyesno("Warning", f"Are you sure you want to delete the following users?\n"
@@ -226,7 +226,7 @@ def create_selection_window(options: list) -> None:
             config.wll_delete = [selected.split()[-1] for selected in selected_options if selected]
             config.yes_no = True
             return
-        config.tasks.append(lambda: print("Canceled users deletion"))
+        config.tasks.append("Canceled users deletion")
         config.yes_no = False
         return
 
@@ -238,7 +238,7 @@ def create_selection_window(options: list) -> None:
             config.tasks.append(lambda: gui.root.grab_release())
             selection_window_.destroy()
             canvas_.unbind_all("<MouseWheel>")
-            config.tasks.append(lambda: print("Canceled users deletion"))
+            config.tasks.append("Canceled users deletion")
 
         gui.root.grab_set()
         selection_window.protocol("WM_DELETE_WINDOW", on_window_close)
@@ -318,7 +318,7 @@ class ProgressBar:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """cleans up after the progress bar finishes"""
-        config.tasks.append(lambda: print(self.end_statement))
+        config.tasks.append(self.end_statement)
         self.progressbar.destroy()
         self.label.destroy()
 
@@ -608,7 +608,7 @@ def clear_space_func() -> None:
         except:
             log()
     if flag and config.delete_edb:
-        config.tasks.append(lambda: print(fr"Deleted the search.edb file"))
+        config.tasks.append(fr"Deleted the search.edb file")
     else:
         if config.delete_edb:
             print_error(gui.console, output="Failed to remove search.edb file", newline=True)
@@ -653,7 +653,7 @@ def del_users() -> None:
             continue
         users_to_choose_delete.append([user_name_translation(dir_), dir_])
     if not users_to_choose_delete:
-        config.tasks.append(lambda: print("No users were found to delete"))
+        config.tasks.append("No users were found to delete")
         return
     create_selection_window(users_to_choose_delete)
     if not config.yes_no:
@@ -667,7 +667,7 @@ def del_users() -> None:
             while not all([result.done() for result in jobs]):
                 sleep(0.1)
     space_final = get_space(pc)
-    config.tasks.append(lambda: print(f"Cleared {abs((space_final - space_init)):.1f} GB from the disk"))
+    config.tasks.append(f"Cleared {abs((space_final - space_init)):.1f} GB from the disk")
     try:
         space = get_space(pc)
         if space <= 5:
@@ -724,9 +724,9 @@ def get_printers_func() -> None:
                             printer = EnumKey(printer_path, i).replace(",", "\\").strip()
                             p = f"{printer} was found on user {users_dict[sid]}"
                             if not flag:
-                                config.tasks.append(lambda: print("\n", "-" * 54, "Network printers", "-" * 53))
+                                config.tasks.append("\n " + ("-" * 54) + " Network printers " + ("-" * 53))
                                 flag = True
-                            config.tasks.append(lambda: print(p))
+                            config.tasks.append(p)
                             found_any = True
                         except:
                             log()
@@ -750,12 +750,12 @@ def get_printers_func() -> None:
                         found.append(prnt)
                         int(prnt.split(".")[0])
                         if not flag:
-                            config.tasks.append(lambda: print("\n", "-" * 54, " TCP/IP printers ", "-" * 53))
+                            config.tasks.append("\n " + ("-" * 54) + "  TCP/IP printers  " + ("-" * 53))
                             flag = True
-                        config.tasks.append(lambda: print(
+                        config.tasks.append(
                             f"TCP/IP Printer with an IP of {prnt} is located at {config.ip_printers[prnt.strip()]}" if
                             prnt in config.ip_printers else
-                            f"Printer with an IP of {prnt} is not on any of the servers"))
+                            f"Printer with an IP of {prnt} is not on any of the servers")
                         found_any = True
                     except (FileNotFoundError, ValueError):
                         pass
@@ -775,12 +775,12 @@ def get_printers_func() -> None:
                             prnt = prnt.split("_")[0]
                         found.append(prnt)
                         if not flag:
-                            config.tasks.append(lambda: print("\n", "-" * 55, " WSD printers ", "-" * 55))
+                            config.tasks.append("\n " + ("-" * 55) + "  WSD printers  " + ("-" * 55))
                             flag = True
-                        config.tasks.append(lambda: print(
+                        config.tasks.append(
                             f"WSD printer with an IP of {prnt.strip()} is located at "
                             f"{config.ip_printers[prnt.strip()]}" if prnt.strip() in config.ip_printers else
-                            f"WSD printer with an IP of {prnt} is not on any of the servers"))
+                            f"WSD printer with an IP of {prnt} is not on any of the servers")
                         found_any = True
                     except (FileNotFoundError, ValueError, IndexError):
                         pass
@@ -1002,11 +1002,11 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
                     pc = pc.lower()
                     if pc in config.ip_printers:
                         pr = pc
-                        config.tasks.append(lambda: print(f"Printer with an IP of {pc} is at {config.ip_printers[pr]}"))
+                        config.tasks.append(f"Printer with an IP of {pc} is at {config.ip_printers[pr]}")
                         pc = config.ip_printers[pc]
                     elif pc in config.svr_printers:
                         pr = pc
-                        config.tasks.append(lambda: print(f"Printer {pc} has an ip of {config.svr_printers[pr]}"))
+                        config.tasks.append(f"Printer {pc} has an ip of {config.svr_printers[pr]}")
                         pc = config.svr_printers[pc]
                     config.tasks.append(lambda: copy_clip(pc))
                 else:
