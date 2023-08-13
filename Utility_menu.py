@@ -829,7 +829,11 @@ def run_func(func: callable, tries: int = 0) -> None:
     while t.is_alive() or config.tasks:
         refresh()
         if config.tasks:
-            config.tasks.pop(0)()
+            cur = config.tasks.pop(0)
+            if isinstance(cur, str):
+                print(cur)
+            else:
+                cur()
         sleep(0.03)
     disable() if config.disable else enable()
 
