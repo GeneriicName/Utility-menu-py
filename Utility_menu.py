@@ -998,10 +998,12 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
                 if any([pc.lower() in config.ip_printers, pc.lower() in config.svr_printers]):
                     pc = pc.lower()
                     if pc in config.ip_printers:
-                        config.tasks.append(lambda: print(f"Printer with an IP of {pc} is at {config.ip_printers[pc]}"))
+                        pr = pc
+                        config.tasks.append(lambda: print(f"Printer with an IP of {pc} is at {config.ip_printers[pr]}"))
                         pc = config.ip_printers[pc]
                     elif pc in config.svr_printers:
-                        config.tasks.append(lambda: print(f"Printer {pc} has an ip of {config.svr_printers[pc]}"))
+                        pr = pc
+                        config.tasks.append(lambda: print(f"Printer {pc} has an ip of {config.svr_printers[pr]}"))
                         pc = config.svr_printers[pc]
                     config.tasks.append(lambda: copy_clip(pc))
                 else:
