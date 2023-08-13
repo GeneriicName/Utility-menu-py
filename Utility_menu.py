@@ -832,8 +832,11 @@ def run_func(func: callable, tries: int = 0) -> None:
             cur = config.tasks.pop(0)
             if isinstance(cur, str):
                 print(cur)
-            else:
-                cur()
+            elif callable(cur):
+                try:
+                    cur()
+                except:
+                    log()
         sleep(0.03)
     disable() if config.disable else enable()
 
