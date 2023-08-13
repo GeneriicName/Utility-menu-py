@@ -724,7 +724,7 @@ def get_printers_func() -> None:
                             printer = EnumKey(printer_path, i).replace(",", "\\").strip()
                             p = f"{printer} was found on user {users_dict[sid]}"
                             if not flag:
-                                config.tasks.append("\n " + ("-" * 54) + " Network printers " + ("-" * 53))
+                                config.tasks.append(f"\n{' Network printers ':-^127}")
                                 flag = True
                             config.tasks.append(p)
                             found_any = True
@@ -750,7 +750,7 @@ def get_printers_func() -> None:
                         found.append(prnt)
                         int(prnt.split(".")[0])
                         if not flag:
-                            config.tasks.append("\n " + ("-" * 54) + "  TCP/IP printers  " + ("-" * 53))
+                            config.tasks.append(f"\n{' TCP/IP printers ':-^127}")
                             flag = True
                         config.tasks.append(
                             f"TCP/IP Printer with an IP of {prnt} is located at {config.ip_printers[prnt.strip()]}" if
@@ -775,7 +775,7 @@ def get_printers_func() -> None:
                             prnt = prnt.split("_")[0]
                         found.append(prnt)
                         if not flag:
-                            config.tasks.append("\n " + ("-" * 55) + "  WSD printers  " + ("-" * 55))
+                            config.tasks.append(f"\n{' WSD printers ':-^127}")
                             flag = True
                         config.tasks.append(
                             f"WSD printer with an IP of {prnt.strip()} is located at "
