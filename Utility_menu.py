@@ -376,9 +376,12 @@ def fix_ie_func() -> None:
 
 def fix_cpt_func() -> None:
     """"fixes cockpit printer via deleting the appropriate registry keys"""
-    with ConnectRegistry(config.current_computer, HKEY_CURRENT_USER) as reg:
+    sid_ = config.current_sid
+    if not sid_:
+        return
+    with ConnectRegistry(config.current_computer, HKEY_USERS) as reg:
         try:
-            with OpenKey(reg, r"SOFTWARE\Jetro Platforms\JDsClient\PrintPlugIn", 0, KEY_ALL_ACCESS) as key:
+            with OpenKey(reg, fr"{sid_}\SOFTWARE\Jetro Platforms\JDsClient\PrintPlugIn", 0, KEY_ALL_ACCESS) as key:
                 DeleteValue(key, "PrintClientPath")
         except FileNotFoundError:
             pass
@@ -972,7 +975,7 @@ def on_submit(pc: str = None, passed_user: str = None) -> None:
         if is_cpt_fixed(pc):
             config.tasks.append(lambda: update(gui.cpt_fixed, "Cockpit printer: Fixed"))
         else:
-            config.tasks.append(lambda: update_error(gui.cpt_fixed, "Cockpit printer", "Not fixed"))
+            config.tasks.append(lambda: update_error(gui.cpt_fixed, "Cockpit printer: ", "Not fixed"))
 
         if user_ or passed_user:
             if passed_user:
@@ -1290,6 +1293,36 @@ def get_username(pc: str) -> str | None:
         log()
 
 
+def get_sid(user_: str = None) -> str | bool:
+    if not user_:
+        user_ = config.current_user
+
+    with ConnectRegistry(config.current_computer, HKEY_USERS) as reg:
+        sid_list = []
+        with OpenKey(reg, "") as users:
+            users_len = QueryInfoKey(users)[0]
+            for i in range(users_len):
+                try:
+                    sid_list.append(EnumKey(users, i))
+                except FileNotFoundError:
+                    pass
+
+    with ConnectRegistry(config.current_computer, HKEY_LOCAL_MACHINE) as users_path:
+        for sid in set(sid_list):
+            try:
+                with OpenKey(users_path,
+                             fr"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}") as profiles:
+                    username = QueryValueEx(profiles, "ProfileImagePath")
+                    if username[0].startswith("C:\\"):
+                        username = username[0].split("\\")[-1]
+                        if user_ == username:
+                            config.current_sid = sid
+                            return sid
+            except FileNotFoundError:
+                pass
+        return False
+
+
 def user_name_translation(username_: str) -> str | None:
     """returns the display name of a user in the domain"""
     ad = adquery.ADQuery()
@@ -1379,10 +1412,14 @@ def is_ie_fixed(pc: str) -> bool:
 
 def is_cpt_fixed(pc: str) -> bool:
     """checks if cockpit printer is fixed via querying the registry keys"""
+    sid_ = get_sid()
+    if not sid_:
+        return True
     try:
-        with ConnectRegistry(pc, HKEY_CURRENT_USER) as reg_:
+        with ConnectRegistry(pc, HKEY_USERS) as reg_:
             try:
-                with OpenKey(reg_, r"SOFTWARE\Jetro Platforms\JDsClient\PrintPlugIn", 0, KEY_ALL_ACCESS) as key_:
+                with OpenKey(reg_, fr"{sid_}\SOFTWARE\Jetro Platforms\JDsClient\PrintPlugIn", 0,
+                             KEY_ALL_ACCESS) as key_:
                     QueryValueEx(key_, "PrintClientPath")
                     return False
             except FileNotFoundError:
