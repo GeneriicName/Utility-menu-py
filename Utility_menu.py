@@ -1300,7 +1300,7 @@ def get_username(pc: str) -> str | None:
         log()
 
 
-def get_sid(user_: str = None) -> str | bool:
+def get_sid(user_: str = None) -> str:
     if not user_:
         user_ = config.current_user
 
@@ -1318,11 +1318,11 @@ def get_sid(user_: str = None) -> str | bool:
         for sid in set(sid_list):
             try:
                 with OpenKey(users_path,
-                             fr"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}") as profiles:
+                             fr"SOFTWARE\Microsoft\Windows NT\\CurrentVersion\ProfileList\{sid}") as profiles:
                     username = QueryValueEx(profiles, "ProfileImagePath")
                     if username[0].startswith("C:\\"):
                         username = username[0].split("\\")[-1]
-                        if user_ == username:
+                        if user_.lower() == username.lower():
                             config.current_sid = sid
                             return sid
             except FileNotFoundError:
