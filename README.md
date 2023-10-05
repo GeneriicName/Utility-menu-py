@@ -76,7 +76,7 @@ echo %computername% > "\\server\folder\%username%.txt"
 
 **The "assets" folder contains all the images for the GUI application. You can paste a username/computer name/IP address or network path of a printer in the entry box for translation to network their network path in the print servers or their IP address**
 
-**This was tested on windows 10-11, i cannot guarantee it will work on earlier versions**
+**This was tested on windows 10-11, i cannot guarantee it will work on earlier versions, and was built with python 3.9**
 
 ***This script features support for logging, although not fully. However, points of the script that are most likely prone to exceptions are covered.***
 
