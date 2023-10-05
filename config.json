@@ -11,5 +11,6 @@
   "start_with_exclude": ["username"],
   "users_txt": "\\\\path\\to\\txt file",
   "assets": "\\\\path\\to\\images",
-  "title": "your title here"
+  "title": "your title here",
+  "color": "#545664"
 }
