@@ -30,6 +30,8 @@ This is an example of the config file which is included with the directory.
 | "users_txt"     | "\\\\path\\to\\folder\\with\\user.txt files"     | path of folder which contains computer names in usename.txt files      |
 | "assets"     | "\\path\to\directory"       | path to assets such as images      |
 | "title"     | "hello world!"       | give a title to your GUI window      |
+| "color"     | "#545664"       | backround color to the main root window      |
+
 
 
 
@@ -55,6 +57,10 @@ echo %computername% > "\\server\folder\%username%.txt"
 
 **Fix cockpit printers:** This deletes the appropriate registry keys. Useful only if your organization uses Jetro Cockpit.
 
+**Close outlook:** This will close outlook and lync (skype) related processes.
+
+**Export**: Export the current user's network printes and mapped drives into both a .txt file and a .bat file, the .bat file will attempt to re-install all the server-installed network printers or TCP/IP-WSD that were found on the server, as well as remap the network drives.
+
 **Fix 3 languages bug:** Fixes a bug when the same language is displayed twice.
 
 **Delete users folders:**, Choose users to delete their folders in order to cleans up space. If the user is in your domain, it'll show their display name to make it clearer which users you are deleting, will exclude the current user of the remote computer, as well as additonal users that you can configure in the config.json file
@@ -70,6 +76,8 @@ echo %computername% > "\\server\folder\%username%.txt"
 
 **The "assets" folder contains all the images for the GUI application. You can paste a username/computer name/IP address or network path of a printer in the entry box for translation to network their network path in the print servers or their IP address**
 
+**This was tested on windows 10-11, i cannot guarantee it will work on earlier versions**
+
 ***This script features support for logging, although not fully. However, points of the script that are most likely prone to exceptions are covered.***
 
 
@@ -79,5 +87,6 @@ echo %computername% > "\\server\folder\%username%.txt"
 I won't be updating this script any further, but if you need help understanding why I did something in my script or how it works, feel free to ask.
 
 
-![example](https://github.com/GeneriicName/Utility-menu-py/assets/139624416/7e92c976-af71-4b5e-8d77-40268c05d35a)
 
+
+![example](https://github.com/GeneriicName/Utility-menu-py/assets/139624416/5430129d-bef7-4d7c-a983-16706c5f6cb5)
